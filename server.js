@@ -7,7 +7,11 @@ const authRoutes = require("./routes/authRoutes")
 const app = express();
 const port = process.env.PORT || 5500;
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://mybuddyfrontend.netlify.app/', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 app.use(express.json());
 
 connectDB();
