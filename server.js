@@ -9,7 +9,7 @@ const instituteRoutes = require('./routes/instituteRoutes')
 
 
 const app = express();
-const port = process.env.PORT || 5500;
+const port = process.env.PORT;
 
 app.use(cors({
   origin: 'http://localhost:5173', 
