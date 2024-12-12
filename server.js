@@ -9,10 +9,10 @@ const instituteRoutes = require('./routes/instituteRoutes')
 
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 5100;
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: 'https://sunny-cassata-e542e9.netlify.app/', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -31,5 +31,5 @@ app.use('/api', instituteRoutes);
 
 
 app.listen(port, () => {
-  console.log(`Server is running successfully on http://localhost:${port}`);
+  console.log(`Server is running successfully on ${port}`);
 });

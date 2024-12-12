@@ -28,10 +28,15 @@ const userLogin = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         const token = generateToken(user._id, user.role);
-        res.status(200).json({ token, role: user.role });
+        res.status(200).json({ 
+            token, 
+            user: { id: user._id, name: user.name, email: user.email, role: user.role }, 
+            role: user.role 
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 module.exports={userRegsiter, userLogin}
