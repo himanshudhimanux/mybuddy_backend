@@ -11,11 +11,18 @@ const instituteRoutes = require('./routes/instituteRoutes')
 const app = express();
 const port = process.env.PORT || 5100;
 
-app.use(cors({
-  origin: 'https://mybuddyfrontend.netlify.app/', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-}));
+const corsOptions = (req, callback) => {
+  const allowedOrigins = ['https://mybuddyfrontend.netlify.app', 'http://localhost:5173'];
+  const origin = req.header('Origin');
+  if (allowedOrigins.includes(origin)) {
+      callback(null, { origin: true }); // Allow the origin
+  } else {
+      callback(new Error('Not allowed by CORS')); // Block others
+  }
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 connectDB();
