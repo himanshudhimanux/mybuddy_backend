@@ -12,7 +12,7 @@ const app = express();
 const port = process.env.PORT || 5100;
 
 app.use(cors({
-  origin: 'https://sunny-cassata-e542e9.netlify.app/', 
+  origin: 'http://localhost:5173', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
