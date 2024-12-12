@@ -12,7 +12,7 @@ const app = express();
 const port = process.env.PORT || 5100;
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: 'https://mybuddyfrontend.netlify.app/', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
