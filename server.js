@@ -22,7 +22,6 @@ const corsOptions = (req, callback) => {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(express.json());
 
 connectDB();
