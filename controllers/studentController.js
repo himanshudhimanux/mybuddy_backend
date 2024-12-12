@@ -67,18 +67,33 @@ const studentRegister = async (req, res) => {
 // GET: All Students with Pagination
 const getAllStudent = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query; // Default to page 1, limit 10
-        const students = await Student.find()
+        const { page = 1, limit = 10, search = "", filter = {} } = req.query;
+
+        // Build the query for filtering and searching
+        const query = {
+            $and: [
+                filter, // Apply additional filters, e.g., { gender: "male" }
+                {
+                    $or: [
+                        { name: { $regex: search, $options: "i" } }, // Case-insensitive search
+                        { email: { $regex: search, $options: "i" } },
+                        { phone: { $regex: search, $options: "i" } }
+                    ]
+                }
+            ]
+        };
+
+        const students = await Student.find(query)
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
 
-        const count = await Student.countDocuments();
+        const count = await Student.countDocuments(query);
 
         res.json({
             students,
             totalPages: Math.ceil(count / limit),
-            currentPage: page,
+            currentPage: Number(page),
         });
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch students", error: error.message });
