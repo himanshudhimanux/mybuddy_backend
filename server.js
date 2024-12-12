@@ -11,14 +11,22 @@ const instituteRoutes = require('./routes/instituteRoutes')
 const app = express();
 const port = process.env.PORT || 5100;
 
-const corsOptions = (req, callback) => {
-  const allowedOrigins = ['https://mybuddyfrontend.netlify.app', 'http://localhost:5173'];
-  const origin = req.header('Origin');
-  if (allowedOrigins.includes(origin)) {
-      callback(null, { origin: true }); // Allow the origin
-  } else {
-      callback(new Error('Not allowed by CORS')); // Block others
-  }
+const corsOptions = {
+  origin: (origin, callback) => {
+      const allowedOrigins = [
+          "https://mybuddyfrontend.netlify.app", // Your production frontend URL
+          "http://localhost:3000",              // Your local development frontend
+      ];
+
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+      } else {
+          callback(new Error("Not allowed by CORS"));
+      }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  credentials: true,                         // Allow credentials (cookies, auth headers)
 };
 
 app.use(cors(corsOptions));
