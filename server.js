@@ -15,7 +15,7 @@ const corsOptions = {
   origin: (origin, callback) => {
       const allowedOrigins = [
           "https://mybuddyfrontend.netlify.app", // Your production frontend URL
-          "http://localhost:3000",              // Your local development frontend
+          "http://localhost:5173",              // Your local development frontend
       ];
 
       // Allow requests with no origin (like mobile apps or Postman)
