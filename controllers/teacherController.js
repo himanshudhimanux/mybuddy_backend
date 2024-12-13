@@ -10,6 +10,7 @@ const teacherRegister = async (req, res) => {
             subject,
             address,
             phone,
+            email,
             gender,
             photo
         } = req.body;
@@ -19,6 +20,7 @@ const teacherRegister = async (req, res) => {
             subject,
             address,
             phone,
+            email,
             gender,
             photo
         });

@@ -6,6 +6,7 @@ const teacherSchema = new mongoose.Schema({
   address: { type: String, required: true },
   subject: { type: String, required: true },
   phone: { type: Number, required: true },
+  email: {type: String, required: true},
   gender: { type: String, required: true },
   photo: { type: String , default: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"},
 },
