@@ -44,7 +44,6 @@ const getAllTeachers = async (req, res) => {
                     $or: [
                         { name: { $regex: search, $options: "i" } }, // Case-insensitive search
                         { email: { $regex: search, $options: "i" } },
-                        { phone: { $regex: search, $options: "i" } },
                         { subject: { $regex: search, $options: "i" } }
                     ]
                 }

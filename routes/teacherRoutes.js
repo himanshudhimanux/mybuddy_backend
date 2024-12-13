@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/teacher', verifyToken, roleCheck('admin'), teacherRegister);
 router.get('/teachers', verifyToken, roleCheck('admin'), getAllTeachers);
-router.get('/students/:id', verifyToken, roleCheck('admin'), specificTeacher);
+router.get('/teacher/:id', verifyToken, roleCheck('admin'), specificTeacher);
 
 
 module.exports = router;
