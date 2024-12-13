@@ -75,6 +75,7 @@ const getAllStudent = async (req, res) => {
                 filter, // Apply additional filters, e.g., { gender: "male" }
                 {
                     $or: [
+                        { registrationNumber: { $regex: search, $options: "i" } },
                         { name: { $regex: search, $options: "i" } }, // Case-insensitive search
                         { email: { $regex: search, $options: "i" } },
                         { phone: { $regex: search, $options: "i" } }

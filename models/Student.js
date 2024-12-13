@@ -11,7 +11,7 @@ const studentSchema = new mongoose.Schema({
     studentPhone: { type: Number },
     dob: { type: Date, required: true },
     gender: { type: String, required: true },
-    photo: { type: String , default: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"},
+    photo: { type: String , default: "https://via.placeholder.com/50"},
     email: { type: String },
 },
 {
