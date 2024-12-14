@@ -1,5 +1,4 @@
 const multer = require("multer");
-const path = require("path");
 const Teacher = require("../models/Teacher");
 
 
@@ -18,13 +17,11 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
   
   // POST: Register Teacher
-  
+
   const teacherRegister = async (req, res) => {
     try {
-      console.log("Request Body:", req.body);
-      console.log("Request File:", req.file);
   
-      const { name, subject, address, phone, gender } = req.body;
+      const { name, subject, address, phone, gender , photo } = req.body;
   
       const teacher = new Teacher({
         name,

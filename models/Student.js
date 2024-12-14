@@ -9,7 +9,7 @@ const studentSchema = new mongoose.Schema({
     fatherPhone: { type: Number, required: true },
     motherPhone: { type: Number },
     studentPhone: { type: Number },
-    dob: { type: Date, required: true },
+    dob: { type: Date },
     gender: { type: String, required: true },
     photo: { type: String , default: "https://via.placeholder.com/50"},
     email: { type: String },

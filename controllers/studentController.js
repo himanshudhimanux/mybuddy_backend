@@ -1,3 +1,4 @@
+const multer = require("multer");
 const Student = require("../models/Student");
 
 // Function to generate registration numbers
@@ -11,6 +12,18 @@ const generateRegistrationNumber = async () => {
         throw new Error("Failed to generate registration number");
     }
 };
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "uploads/"); // Store files in the "uploads" directory
+    },
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`); // Add a timestamp to the file name
+    },
+  });
+  
+  const studentPicUpload = multer({ storage });
 
 // POST: Register Student
 const studentRegister = async (req, res) => {
@@ -52,8 +65,8 @@ const studentRegister = async (req, res) => {
             studentPhone,
             dob,
             gender,
-            photo,
             email,
+            photo: req.file ? `/uploads/${req.file.filename}` : undefined,
         });
 
         await student.save();
@@ -112,4 +125,4 @@ const specificStudent = async (req, res) => {
     }
 };
 
-module.exports = { studentRegister, getAllStudent, specificStudent };
+module.exports = { studentRegister, studentPicUpload, getAllStudent, specificStudent };
