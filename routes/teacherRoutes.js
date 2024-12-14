@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
-const { teacherRegister, getAllTeachers, specificTeacher } = require('../controllers/teacherController');
+const { teacherRegister, getAllTeachers, specificTeacher, upload } = require('../controllers/teacherController');
 const router = express.Router();
 
 router.post('/teacher', upload.single("photo"), verifyToken, roleCheck('admin'), teacherRegister);

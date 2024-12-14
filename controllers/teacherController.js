@@ -18,8 +18,12 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
   
   // POST: Register Teacher
+  
   const teacherRegister = async (req, res) => {
     try {
+      console.log("Request Body:", req.body);
+      console.log("Request File:", req.file);
+  
       const { name, subject, address, phone, gender } = req.body;
   
       const teacher = new Teacher({
@@ -28,14 +32,14 @@ const storage = multer.diskStorage({
         address,
         phone,
         gender,
-        photo: req.file ? `/uploads/${req.file.filename}` : undefined, // Save the uploaded file path
+        photo: req.file ? `/uploads/${req.file.filename}` : undefined,
       });
   
       await teacher.save();
       res.status(201).json(teacher);
     } catch (error) {
-      console.error(error); // Log error for debugging
-      res.status(500).json({ message: "Internal Server Error" });
+      console.error("Error:", error); // Log full error details
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
   };
 
