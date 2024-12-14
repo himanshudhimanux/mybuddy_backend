@@ -1,34 +1,43 @@
+const multer = require("multer");
+const path = require("path");
 const Teacher = require("../models/Teacher");
 
 
 
 // POST: Register Teacher
-const teacherRegister = async (req, res) => {
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "uploads/"); // Store files in the "uploads" directory
+    },
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`); // Add a timestamp to the file name
+    },
+  });
+  
+  const upload = multer({ storage });
+  
+  // POST: Register Teacher
+  const teacherRegister = async (req, res) => {
     try {
-        const {
-            name,
-            subject,
-            address,
-            phone,
-            gender,
-            photo
-        } = req.body;
-
-        const teacher = new Teacher({
-            name,
-            subject,
-            address,
-            phone,
-            gender,
-            photo
-        });
-
-        await teacher.save();
-        res.status(201).json(teacher);
+      const { name, subject, address, phone, gender } = req.body;
+  
+      const teacher = new Teacher({
+        name,
+        subject,
+        address,
+        phone,
+        gender,
+        photo: req.file ? `/uploads/${req.file.filename}` : undefined, // Save the uploaded file path
+      });
+  
+      await teacher.save();
+      res.status(201).json(teacher);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+      console.error(error); // Log error for debugging
+      res.status(500).json({ message: "Internal Server Error" });
     }
-};
+  };
 
 
 // GET: All Teacher with Pagination
@@ -78,4 +87,4 @@ const specificTeacher = async (req, res) => {
     }
 };
 
-module.exports = { teacherRegister, getAllTeachers, specificTeacher };
+module.exports = { teacherRegister, upload, getAllTeachers, specificTeacher };
