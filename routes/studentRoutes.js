@@ -3,7 +3,7 @@ const { studentRegister, getAllStudent, specificStudent, studentPicUpload } = re
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
-router.post('/student', studentPicUpload.single("photo"), verifyToken, roleCheck('admin'), studentRegister);
+router.post('/student', studentPicUpload, verifyToken, roleCheck('admin'), studentRegister);
 router.get('/students', verifyToken, roleCheck('admin', 'teacher'), getAllStudent);
 router.get('/students/:id', verifyToken, roleCheck('admin', 'teacher'), specificStudent);
 

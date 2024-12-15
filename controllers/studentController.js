@@ -6,7 +6,7 @@ const generateRegistrationNumber = async () => {
     try {
         const currentYear = new Date().getFullYear().toString(); // e.g., 2024
         const studentCount = await Student.countDocuments(); // Get total students
-        const uniqueId = (studentCount + 1).toString().padStart(4, '0'); // e.g., 0001
+        const uniqueId = (studentCount + 1).toString().padStart(4, "0"); // e.g., 0001
         return `REG-${currentYear}-${uniqueId}`; // Format: REG-2024-0001
     } catch (error) {
         throw new Error("Failed to generate registration number");
@@ -16,14 +16,13 @@ const generateRegistrationNumber = async () => {
 // Configure multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, "uploads/"); // Store files in the "uploads" directory
+        cb(null, "uploads/"); // Store files in the "uploads" directory
     },
     filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`); // Add a timestamp to the file name
+        cb(null, `${Date.now()}-${file.originalname}`); // Add timestamp to the filename
     },
-  });
-  
-  const studentPicUpload = multer({ storage });
+});
+const upload = multer({ storage }); // Multer middleware
 
 // POST: Register Student
 const studentRegister = async (req, res) => {
@@ -38,23 +37,19 @@ const studentRegister = async (req, res) => {
             studentPhone,
             dob,
             gender,
-            photo,
             email,
         } = req.body;
 
-        // Check if all mandatory fields are provided
-        if (!name || !fatherName || !motherName || !address || !dob || !gender) {
+        // Validation for required fields
+        if (!name || !fatherName || !motherName || !address || !dob || !gender || !fatherPhone) {
             return res.status(400).json({ message: "All mandatory fields are required" });
         }
 
-        // Generate a unique registration number
+        // Generate registration number
         const registrationNumber = await generateRegistrationNumber();
 
-        if (!registrationNumber) {
-            return res.status(500).json({ message: "Failed to generate registration number" });
-        }
-
-        const student = new Student({
+        // Create a new student object
+        const newStudent = new Student({
             registrationNumber,
             name,
             fatherName,
@@ -63,16 +58,18 @@ const studentRegister = async (req, res) => {
             fatherPhone,
             motherPhone,
             studentPhone,
-            dob,
+            dob: new Date(dob),
             gender,
             email,
             photo: req.file ? `/uploads/${req.file.filename}` : undefined,
         });
 
-        await student.save();
-        res.status(201).json(student);
+        // Save to the database
+        await newStudent.save();
+        res.status(201).json({ message: "Student registered successfully", student: newStudent });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error adding student:", error);
+        res.status(500).json({ message: "Server error: Unable to add student" });
     }
 };
 
@@ -125,4 +122,7 @@ const specificStudent = async (req, res) => {
     }
 };
 
-module.exports = { studentRegister, studentPicUpload, getAllStudent, specificStudent };
+module.exports = { 
+    studentPicUpload: upload.single("photo"), // Middleware for file upload
+    studentRegister, getAllStudent, specificStudent 
+};
