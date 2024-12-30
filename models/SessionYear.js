@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const sessionYearSchema = new mongoose.Schema({
     yearName: { type: String, required: true },
     defaultYear: { type: Boolean, default: false },

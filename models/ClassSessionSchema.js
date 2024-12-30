@@ -26,8 +26,11 @@ const classSessionSchema = new mongoose.Schema({
     createdDate: { type: Date, default: Date.now },
     updatedDate: { type: Date, default: Date.now },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    history: [{ type: Object }]
-  });
+  },
+{
+  timestamps: true
+}
+);
   
   module.exports = mongoose.model('ClassSession', classSessionSchema);
   

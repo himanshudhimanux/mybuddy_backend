@@ -6,6 +6,11 @@ const authRoutes = require("./routes/authRoutes")
 const studentRoutes = require('./routes/studentRoutes')
 const teacherRoutes = require('./routes/teacherRoutes');
 const instituteRoutes = require('./routes/instituteRoutes')
+const batchRoutes = require('./routes/batchRoutes')
+const courseRoutes = require('./routes/courseRoutes')
+const subjectRoutes = require('./routes/subjectRoutes')
+const locationRoutes = require('./routes/locationRoutes')
+const sessionYearRoutes = require('./routes/sessionYearRoutes')
 
 
 const app = express();
@@ -38,11 +43,19 @@ app.get('/', (req, res) => {
     res.send('Hello My Buddy!')
 })
 
+// ========= Routes=============
+
 app.use('/api/auth', authRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', teacherRoutes);
 app.use('/api', instituteRoutes);
+app.use('/api', batchRoutes);
+app.use('/api', courseRoutes);
+app.use('/api', subjectRoutes);
+app.use('/api', locationRoutes);
+app.use('/api', sessionYearRoutes);
 
+// ========= Routes end=============
 
 app.listen(port, () => {
   console.log(`Server is running successfully on ${port}`);
