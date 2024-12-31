@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const { default: mongoose } = require("mongoose");
 
 const batchClassSchema = new mongoose.Schema({
     batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', required: true },

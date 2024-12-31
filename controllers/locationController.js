@@ -3,8 +3,8 @@ const Location = require('../models/Location');
 // Create Location
 const createLocation = async (req, res) => {
   try {
-    const { name, instituteId, createdBy } = req.body;
-    const location = new Location({ name, instituteId, createdBy });
+    const { name, instituteId } = req.body;
+    const location = new Location({ name, instituteId, createdBy: req.user.userId, });
     await location.save();
     res.status(201).json({ message: 'Location created successfully', location });
   } catch (error) {

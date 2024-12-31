@@ -3,8 +3,8 @@ const SessionYear = require('../models/SessionYear');
 // Create Session Year
 const createSessionYear = async (req, res) => {
   try {
-    const { yearName, defaultYear, createdBy } = req.body;
-    const sessionYear = new SessionYear({ yearName, defaultYear, createdBy });
+    const { yearName, defaultYear } = req.body;
+    const sessionYear = new SessionYear({ yearName, defaultYear, createdBy: req.user.userId, });
     await sessionYear.save();
     res.status(201).json({ message: 'Session year created successfully', sessionYear });
   } catch (error) {

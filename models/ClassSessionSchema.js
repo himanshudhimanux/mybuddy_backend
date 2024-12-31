@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const classSessionSchema = new mongoose.Schema({
-    sessionId: { type: String, required: true, unique: true },
     batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', required: true },
     batchDate: { type: Date, required: true },
     status: {
@@ -19,8 +18,8 @@ const classSessionSchema = new mongoose.Schema({
       enum: ['Online', 'Offline'],
       default: 'Offline'
     },
-    startTime: { type: String },
-    endTime: { type: String },
+    batchStartTiming: { type: String },
+    batchEndTiming: { type: String },
     absenteeNotification: { type: Boolean, default: false },
     presentNotification: { type: Boolean, default: false },
     createdDate: { type: Date, default: Date.now },
