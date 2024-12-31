@@ -13,6 +13,8 @@ const locationRoutes = require('./routes/locationRoutes')
 const sessionYearRoutes = require('./routes/sessionYearRoutes')
 const batchClassRoutes = require('./routes/batchClassRoutes')
 const classSessionRoutes = require('./routes/classSessionRoutes')
+const batchStudentRoutes = require('./routes/batchStudentRoutes')
+const attendanceRoutes = require('./routes/attendanceRoutes')
 
 
 const app = express();
@@ -58,6 +60,8 @@ app.use('/api', locationRoutes);
 app.use('/api', sessionYearRoutes);
 app.use('/api', batchClassRoutes);
 app.use('/api', classSessionRoutes)
+app.use('/api', batchStudentRoutes)
+app.use('/api', attendanceRoutes)
 
 // ========= Routes end=============
 
