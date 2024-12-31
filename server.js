@@ -11,6 +11,8 @@ const courseRoutes = require('./routes/courseRoutes')
 const subjectRoutes = require('./routes/subjectRoutes')
 const locationRoutes = require('./routes/locationRoutes')
 const sessionYearRoutes = require('./routes/sessionYearRoutes')
+const batchClassRoutes = require('./routes/batchClassRoutes')
+const classSessionRoutes = require('./routes/classSessionRoutes')
 
 
 const app = express();
@@ -54,6 +56,8 @@ app.use('/api', courseRoutes);
 app.use('/api', subjectRoutes);
 app.use('/api', locationRoutes);
 app.use('/api', sessionYearRoutes);
+app.use('/api', batchClassRoutes);
+app.use('/api', classSessionRoutes)
 
 // ========= Routes end=============
 
