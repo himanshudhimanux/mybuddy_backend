@@ -4,14 +4,22 @@ const Student = require("../models/Student");
 // Function to generate registration numbers
 const generateRegistrationNumber = async () => {
     try {
-        const currentYear = new Date().getFullYear().toString(); // e.g., 2024
-        const studentCount = await Student.countDocuments(); // Get total students
+        const currentYear = new Date().getFullYear().toString(); // e.g., 2025
+        console.warn(currentYear);
+
+        // Count the students registered in the current year
+        const currentYearPrefix = `REG-${currentYear}-`;
+        const studentCount = await Student.countDocuments({
+            registrationNumber: { $regex: `^${currentYearPrefix}` }, // Match registration numbers starting with current year
+        });
+
         const uniqueId = (studentCount + 1).toString().padStart(4, "0"); // e.g., 0001
-        return `REG-${currentYear}-${uniqueId}`; // Format: REG-2024-0001
+        return `REG-${currentYear}-${uniqueId}`; // Format: REG-2025-0001
     } catch (error) {
         throw new Error("Failed to generate registration number");
     }
 };
+
 
 // Configure multer storage
 const storage = multer.diskStorage({
