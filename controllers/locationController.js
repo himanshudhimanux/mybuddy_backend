@@ -47,4 +47,7 @@ const deleteLocation = async (req, res) => {
   }
 };
 
+
+
+
 module.exports={createLocation, getLocations, updateLocation, deleteLocation}
