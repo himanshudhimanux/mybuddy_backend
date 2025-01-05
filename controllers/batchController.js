@@ -32,7 +32,7 @@ const getAllBatches = async (req, res) => {
   try {
     const batches = await Batch.find()
       .populate('sessionYearId', 'yearName') // Populate sessionYearId with yearName
-      .populate('locationId', 'name address') // Populate locationId with name and address
+      .populate('locationId', 'name') // Populate locationId with name and address
       .populate('courseIds', 'name'); // Populate courseIds with name
 
     res.status(200).json(batches);
