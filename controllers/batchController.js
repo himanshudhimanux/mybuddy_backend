@@ -3,14 +3,14 @@ const Batch = require('../models/BatchSchema');
 // Create a new batch
 const createBatch = async (req, res) => {
   try {
-    const { name, sessionYearId, locationId, courseIds, createdBy } = req.body;
+    const { name, sessionYearId, locationId, courseIds } = req.body;
 
     const newBatch = new Batch({
       name,
       sessionYearId,
       locationId,
       courseIds,
-      createdBy
+      createdBy: req.user.userId
     });
 
     await newBatch.save();
@@ -31,9 +31,9 @@ const createBatch = async (req, res) => {
 const getAllBatches = async (req, res) => {
   try {
     const batches = await Batch.find()
-      .populate('sessionYearId')
-      .populate('locationId')
-      .populate('courseIds');
+      .populate('sessionYearId', 'yearName') // Populate sessionYearId with yearName
+      .populate('locationId', 'name address') // Populate locationId with name and address
+      .populate('courseIds', 'name'); // Populate courseIds with name
 
     res.status(200).json(batches);
   } catch (error) {
@@ -43,6 +43,7 @@ const getAllBatches = async (req, res) => {
     });
   }
 };
+
 
 // Get a single batch by ID
 const getBatchById = async (req, res) => {
@@ -135,4 +136,4 @@ const deleteBatch = async (req, res) => {
 };
 
 
-module.exports={createBatch, getAllBatches, updateBatch, deleteBatch}
+module.exports={createBatch, getAllBatches, updateBatch, deleteBatch, getBatchById}
