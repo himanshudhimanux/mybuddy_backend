@@ -3,8 +3,8 @@ const Course = require('../models/Course');
 // Create Course
 const createCourse = async (req, res) => {
   try {
-    const { name, courseType, subjectIds } = req.body;
-    const course = new Course({ name, courseType, subjectIds });
+    const { name, courseType, subjectIds, courseFee } = req.body;
+    const course = new Course({ name, courseType, subjectIds, courseFee });
     await course.save();
     res.status(201).json({ message: 'Course created successfully', course });
   } catch (error) {
