@@ -1,5 +1,4 @@
 const Batch = require('../models/BatchSchema');
-const BatchClass = require('../models/BatchClassSchema')
 const ClassSession = require('../models/ClassSessionSchema');
 
 // Post Create Class Session
@@ -12,10 +11,10 @@ const createClassSession = async (req, res) => {
       const batch = await Batch.findById(batchId);
       if (!batch) return res.status(404).send({ message: 'Batch not found' });
 
-      // Find the BatchClass associated with the Batch
-  const batchClass = await BatchClass.findOne({ batchId: batchId }); // Replace with the correct reference field if different
+      // Find the ClassSession associated with the Batch
+  const ClassSession = await ClassSession.findOne({ batchId: batchId }); // Replace with the correct reference field if different
 
-  if (!batchClass) return res.status(404).send({ message: 'BatchClass not found' });
+  if (!ClassSession) return res.status(404).send({ message: 'ClassSession not found' });
   
       const session = new ClassSession({
         batchId,
@@ -23,8 +22,8 @@ const createClassSession = async (req, res) => {
         status,
         sessionType,
         sessionMode,
-        batchStartTiming: batchStartTiming || batchClass.startTime, // बैच का डिफॉल्ट टाइमिंग या यूजर की टाइमिंग
-        batchEndTiming: batchEndTiming || batchClass.endTime,
+        batchStartTiming: batchStartTiming || ClassSession.startTime, // बैच का डिफॉल्ट टाइमिंग या यूजर की टाइमिंग
+        batchEndTiming: batchEndTiming || ClassSession.endTime,
         absenteesNotification,
         presentNotification,
         createdBy: req.user.userId,

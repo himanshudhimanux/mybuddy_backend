@@ -1,15 +1,47 @@
 const BatchStudent = require('../models/BatchStudentSchema');
+const Batch = require('../models/BatchSchema'); 
+const Course = require('../models/Course'); 
 
+// Create Batch Student
 const createBatchStudent = async (req, res) => {
     try {
-        const { studentId, studentRollNo, batchId, status } = req.body;
+        const {
+            studentId,
+            batchId,
+            payableFees,
+            discountComment,
+            numberOfInstallments,
+            installmentType,
+        } = req.body;
+
+        const existingStudent = await BatchStudent.findOne({ studentId, batchId });
+        if (existingStudent) {
+            return res.status(400).json({ message: 'Student already added to this batch' });
+        }
+
+        const batch = await Batch.findById(batchId).populate('courseIds');
+        console.warn(batch)
+        if (!batch || !batch.courseIds) {
+            return res.status(404).json({ message: 'Batch or associated course not found' });
+        }
+
+        const totalCourseFees = Course.courseFee;
+        console.log(totalCourseFees)
+
+        const lastStudent = await BatchStudent.find({ batchId }).sort({ studentRollNo: -1 }).limit(1);
+        const studentRollNo = lastStudent.length > 0 ? lastStudent[0].studentRollNo + 1 : 1;
 
         const batchStudent = new BatchStudent({
             studentId,
             studentRollNo,
             batchId,
-            status,
-            createdBy: req.user.userId, // From auth middleware
+            joiningDate: new Date(),
+            payableFees,
+            totalCourseFees,
+            discountComment,
+            numberOfInstallments,
+            installmentType,
+            createdBy: req.user.userId,
         });
 
         await batchStudent.save();
@@ -20,21 +52,28 @@ const createBatchStudent = async (req, res) => {
     }
 };
 
-// ---- Get All Student from batch  
-
+// Get All Batch Students
 const getBatchStudents = async (req, res) => {
     try {
-        const { status, batchId, studentRollNo, page = 1, limit = 10 } = req.query;
+        const { batchId, status, page = 1, limit = 10 } = req.query;
 
         const filter = {};
-        if (status) filter.status = status;
         if (batchId) filter.batchId = batchId;
-        if (studentRollNo) filter.studentRollNo = new RegExp(studentRollNo, 'i'); // Case-insensitive search
+        if (status) filter.status = status;
 
         const batchStudents = await BatchStudent.find(filter)
             .skip((page - 1) * limit)
             .limit(Number(limit))
-            .populate('studentId batchId createdBy', 'name email'); // Adjust fields to populate as needed
+            .populate({
+                path: 'batchId',
+                populate: {
+                    path: 'courseIds',
+                    select: 'name courseFee',
+                },
+                select: 'name',
+            })
+            .populate('studentId', 'name fatherName') // Fetch student details
+            .populate('createdBy', 'name'); // Fetch creator details
 
         const total = await BatchStudent.countDocuments(filter);
 
@@ -53,15 +92,27 @@ const getBatchStudents = async (req, res) => {
     }
 };
 
-// get batch student by id  
 
+// Get Batch Student by ID
 const getBatchStudentById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const batchStudent = await BatchStudent.findById(id).populate('studentId batchId createdBy', 'name email');
+        const batchStudent = await BatchStudent.findById(id)
+            .populate({
+                path: 'batchId',
+                populate: {
+                    path: 'courseIds',
+                    select: 'courseName courseFee duration description',
+                },
+                select: 'name',
+            })
+            .populate('studentId', 'name email') // Fetch student details
+            .populate('createdBy', 'name email'); // Fetch creator details
 
-        if (!batchStudent) return res.status(404).json({ message: 'Batch student not found' });
+        if (!batchStudent) {
+            return res.status(404).json({ message: 'Batch student not found' });
+        }
 
         res.status(200).json({ message: 'Batch student fetched successfully', batchStudent });
     } catch (error) {
@@ -70,20 +121,22 @@ const getBatchStudentById = async (req, res) => {
     }
 };
 
-// Update Batch Student  
 
+// Update Batch Student
 const updateBatchStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, payableFees, discountComment, numberOfInstallments, installmentType } = req.body;
 
         const batchStudent = await BatchStudent.findByIdAndUpdate(
             id,
-            { status },
-            { new: true } // Return the updated document
+            { status, payableFees, discountComment, numberOfInstallments, installmentType },
+            { new: true }
         );
 
-        if (!batchStudent) return res.status(404).json({ message: 'Batch student not found' });
+        if (!batchStudent) {
+            return res.status(404).json({ message: 'Batch student not found' });
+        }
 
         res.status(200).json({ message: 'Batch student updated successfully', batchStudent });
     } catch (error) {
@@ -92,15 +145,16 @@ const updateBatchStudent = async (req, res) => {
     }
 };
 
-// Delete Batch Student 
-
+// Delete Batch Student
 const deleteBatchStudent = async (req, res) => {
     try {
         const { id } = req.params;
 
         const batchStudent = await BatchStudent.findByIdAndDelete(id);
 
-        if (!batchStudent) return res.status(404).json({ message: 'Batch student not found' });
+        if (!batchStudent) {
+            return res.status(404).json({ message: 'Batch student not found' });
+        }
 
         res.status(200).json({ message: 'Batch student deleted successfully' });
     } catch (error) {
@@ -109,6 +163,10 @@ const deleteBatchStudent = async (req, res) => {
     }
 };
 
-
-
-module.exports={createBatchStudent, getBatchStudents, getBatchStudentById, updateBatchStudent, deleteBatchStudent}
+module.exports = {
+    createBatchStudent,
+    getBatchStudents,
+    getBatchStudentById,
+    updateBatchStudent,
+    deleteBatchStudent,
+};
