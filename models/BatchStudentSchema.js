@@ -9,7 +9,7 @@ const batchStudentSchema = new mongoose.Schema({
     totalCourseFees: { type: String,},
     discountComment: { type: String },
     numberOfInstallments: { type: Number, required: true },
-    c: {
+    installmenType: {
         type: String,
         enum: ['Monthly', 'Quarterly', 'Halfyearly', 'One Time'],
         required: true,

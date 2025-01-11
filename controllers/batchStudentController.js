@@ -1,6 +1,5 @@
 const BatchStudent = require('../models/BatchStudentSchema');
 const Batch = require('../models/BatchSchema'); 
-const Course = require('../models/Course'); 
 
 // Create Batch Student
 const createBatchStudent = async (req, res) => {
@@ -10,7 +9,6 @@ const createBatchStudent = async (req, res) => {
             batchId,
             payableFees,
             discountComment,
-            numberOfInstallments,
             installmentType,
         } = req.body;
 
@@ -25,7 +23,7 @@ const createBatchStudent = async (req, res) => {
             return res.status(404).json({ message: 'Batch or associated course not found' });
         }
 
-        const totalCourseFees = Course.courseFee;
+        const totalCourseFees = courseIds.courseFee;
         console.log(totalCourseFees)
 
         const lastStudent = await BatchStudent.find({ batchId }).sort({ studentRollNo: -1 }).limit(1);
@@ -39,7 +37,6 @@ const createBatchStudent = async (req, res) => {
             payableFees,
             totalCourseFees,
             discountComment,
-            numberOfInstallments,
             installmentType,
             createdBy: req.user.userId,
         });
