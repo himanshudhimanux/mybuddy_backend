@@ -19,25 +19,12 @@ const attendanceRoutes = require('./routes/attendanceRoutes')
 const app = express();
 const port = process.env.PORT || 5100;
 
-const corsOptions = {
-  origin: (origin, callback) => {
-      const allowedOrigins = [
-          "https://mybuddyfrontend.netlify.app/", // Your production frontend URL
-          "http://localhost:5173",              // Your local development frontend
-      ];
+app.use(cors({
+    origin: 'https://mybuddyfrontend.netlify.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true // If you're using cookies or authentication headers
+}));
 
-      // Allow requests with no origin (like mobile apps or Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-      } else {
-          callback(new Error("Not allowed by CORS"));
-      }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
-  credentials: true,                         // Allow credentials (cookies, auth headers)
-};
-
-app.use(cors(corsOptions));
 app.use(express.json());
 
 connectDB();
