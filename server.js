@@ -22,7 +22,7 @@ const port = process.env.PORT || 5100;
 const corsOptions = {
   origin: (origin, callback) => {
       const allowedOrigins = [
-          "https://frontendmybuddy.netlify.app/", // Your production frontend URL
+          "https://mybuddyfrontend.netlify.app/", // Your production frontend URL
           "http://localhost:5173",              // Your local development frontend
       ];
 
