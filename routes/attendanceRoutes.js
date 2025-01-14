@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
-const { createAttendance, getAttendanceRecords, getAttendanceById, updateAttendance, deleteAttendance } = require('../controllers/attendanceController');
+const { createAttendance, getAttendanceRecords, getAttendanceById, updateAttendance, deleteAttendance, getEligibleStudents } = require('../controllers/attendanceController');
 
 const router = express.Router();
 
@@ -18,5 +18,8 @@ router.put('/update-attendance/:id', verifyToken, roleCheck('admin'), updateAtte
 
 // Delete a attendance
 router.delete('/delete-update/:id', verifyToken, roleCheck('admin'), deleteAttendance);
+
+//Get eligible Stduent
+router.get('/sessions/:sessionId/eligible-students', getEligibleStudents);
 
 module.exports = router;

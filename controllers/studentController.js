@@ -134,3 +134,84 @@ module.exports = {
     studentPicUpload: upload.single("photo"), // Middleware for file upload
     studentRegister, getAllStudent, specificStudent 
 };
+
+// PUT: Update Student
+const updateStudent = async (req, res) => {
+    try {
+        const {
+            name,
+            fatherName,
+            motherName,
+            address,
+            fatherPhone,
+            motherPhone,
+            studentPhone,
+            dob,
+            gender,
+            email,
+        } = req.body;
+
+        const updatedFields = {
+            name,
+            fatherName,
+            motherName,
+            address,
+            fatherPhone,
+            motherPhone,
+            studentPhone,
+            dob: dob ? new Date(dob) : undefined,
+            gender,
+            email,
+        };
+
+        // If a new photo is uploaded, update it
+        if (req.file) {
+            updatedFields.photo = `/uploads/${req.file.filename}`;
+        }
+
+        // Remove undefined fields to avoid overwriting existing data
+        Object.keys(updatedFields).forEach(
+            (key) => updatedFields[key] === undefined && delete updatedFields[key]
+        );
+
+        const updatedStudent = await Student.findByIdAndUpdate(
+            req.params.id,
+            updatedFields,
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedStudent) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        res.status(200).json({ message: "Student updated successfully", student: updatedStudent });
+    } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Failed to update student", error: error.message });
+    }
+};
+
+// DELETE: Delete Student
+const deleteStudent = async (req, res) => {
+    try {
+        const deletedStudent = await Student.findByIdAndDelete(req.params.id);
+
+        if (!deletedStudent) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        res.status(200).json({ message: "Student deleted successfully", student: deletedStudent });
+    } catch (error) {
+        console.error("Error deleting student:", error);
+        res.status(500).json({ message: "Failed to delete student", error: error.message });
+    }
+};
+
+module.exports = { 
+    studentPicUpload: upload.single("photo"), // Middleware for file upload
+    studentRegister, 
+    getAllStudent, 
+    specificStudent, 
+    updateStudent, 
+    deleteStudent 
+};

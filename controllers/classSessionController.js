@@ -1,171 +1,112 @@
-const Batch = require('../models/BatchSchema');
 const ClassSession = require('../models/ClassSessionSchema');
-
-// Post Create Class Session
+const Batch = require('../models/BatchSchema')
 
 const createClassSession = async (req, res) => {
-    try {
-      const { batchId, batchDate, status, sessionType, sessionMode, batchStartTiming, batchEndTiming, absenteesNotification, presentNotification } = req.body;
-  
-      // बैच से डिफॉल्ट टाइमिंग लाना
-      const batch = await Batch.findById(batchId);
-      if (!batch) return res.status(404).send({ message: 'Batch not found' });
+  try {
+    const sessionData = req.body;
 
-      // Find the ClassSession associated with the Batch
-  const ClassSession = await ClassSession.findOne({ batchId: batchId }); // Replace with the correct reference field if different
-
-  if (!ClassSession) return res.status(404).send({ message: 'ClassSession not found' });
-  
-      const session = new ClassSession({
-        batchId,
-        batchDate,
-        status,
-        sessionType,
-        sessionMode,
-        batchStartTiming: batchStartTiming || ClassSession.startTime, // बैच का डिफॉल्ट टाइमिंग या यूजर की टाइमिंग
-        batchEndTiming: batchEndTiming || ClassSession.endTime,
-        absenteesNotification,
-        presentNotification,
-        createdBy: req.user.userId,
-      });
-  
-      await session.save();
-      res.status(201).send({ message: 'Session created successfully', session });
-    } catch (error) {
-      res.status(500).send({ message: 'Error creating session', error });
+    // If no startTime or endTime provided, fetch from batch
+    if (!sessionData.startTime || !sessionData.endTime) {
+      const batch = await Batch.findById(sessionData.batchId);
+      if (!batch) {
+        return res.status(404).json({ message: 'Batch not found' });
+      }
+      sessionData.startTime = sessionData.startTime || batch.defaultStartTime;
+      sessionData.endTime = sessionData.endTime || batch.defaultEndTime;
     }
-  };
 
-// get Batch Class Session  
-const getClassSessions =  async (req, res) => {
-    try {
-      const { page = 1, limit = 10, status, sessionType, sessionMode, batchId } = req.query;
-  
-      // Query filters
-      const filters = {};
-      if (status) filters.status = status;
-      if (sessionType) filters.sessionType = sessionType;
-      if (sessionMode) filters.sessionMode = sessionMode;
-      if (batchId) filters.batchId = batchId;
-  
-      // Pagination logic
-      const skip = (page - 1) * limit;
-  
-      // Fetch data
-      const sessions = await ClassSession.find(filters).skip(skip).limit(parseInt(limit));
-      const total = await ClassSession.countDocuments(filters);
-  
-      res.status(200).send({
-        message: 'Sessions fetched successfully',
-        data: sessions,
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-      });
-    } catch (error) {
-      res.status(500).send({ message: 'Error fetching sessions', error });
-    }
-  };
-  
+    const session = new ClassSession({
+      ...sessionData,
+      createdBy: req.user ? req.user._id : null, // Optional user linking
+    });
 
-// == Get Class Session by Id  
+    await session.save();
+    res.status(201).json({ success: true, message: 'Class session created', session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-const getClassSessionbyId =  async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      const session = await Session.findById(id);
-      if (!session) return res.status(404).send({ message: 'Session not found' });
-  
-      res.status(200).send({ message: 'Session fetched successfully', session });
-    } catch (error) {
-      res.status(500).send({ message: 'Error fetching session', error });
-    }
-  };
+const getClassSessions = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, sessionType, sessionMode, batchId } = req.query;
 
+    const filters = {};
+    if (status) filters.status = status;
+    if (sessionType) filters.sessionType = sessionType;
+    if (sessionMode) filters.sessionMode = sessionMode;
+    if (batchId) filters.batchId = batchId;
 
-// ---- Update Class Session -----
+    const skip = (page - 1) * limit;
+
+    const sessions = await ClassSession.find(filters)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('batchId subjectId teacherId'); // Populate references
+
+    const total = await ClassSession.countDocuments(filters);
+
+    res.status(200).json({
+      success: true,
+      data: sessions,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getClassSessionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const session = await ClassSession.findById(id).populate('batchId subjectId teacherId');
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    res.status(200).json({ success: true, session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 const updateClassSession = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updatedData = req.body;
-  
-      const session = await ClassSession.findById(id);
-      if (!session) return res.status(404).send({ message: 'Session not found' });
-  
-      // Update fields and save
-      Object.assign(session, updatedData);
-      await session.save();
-  
-      // Log changes in history
-      await SessionHistory.create({
-        sessionId: id,
-        changeLog: updatedData,
-        changedBy: req.user._id,
-        changedDate: new Date(),
-      });
-  
-      res.status(200).send({ message: 'Session updated successfully', session });
-    } catch (error) {
-      res.status(500).send({ message: 'Error updating session', error });
-    }
-  };
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
 
-// Soft Class Session Delete if Class Cancelled
+    const session = await ClassSession.findByIdAndUpdate(id, updatedData, { new: true });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    res.status(200).json({ success: true, message: 'Class session updated', session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 const deleteClassSession = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      const session = await ClassSession.findById(id);
-      if (!session) return res.status(404).send({ message: 'Session not found' });
-  
-      // Mark as cancelled
-      session.status = 'Cancelled';
-      await session.save();
-  
-      res.status(200).send({ message: 'Session deleted successfully', session });
-    } catch (error) {
-      res.status(500).send({ message: 'Error deleting session', error });
-    }
-  };
+  try {
+    const { id } = req.params;
+
+    const session = await ClassSession.findById(id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    session.status = 'Cancelled'; // Soft delete by updating status
+    await session.save();
+
+    res.status(200).json({ success: true, message: 'Class session cancelled', session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 
-//   -- Search Session  
-
-const searchClassSession = async (req, res) => {
-    try {
-      const { status, sessionType, sessionMode, batchId, startDate, endDate, keyword } = req.body;
-  
-      const filters = {};
-      if (status) filters.status = status;
-      if (sessionType) filters.sessionType = sessionType;
-      if (sessionMode) filters.sessionMode = sessionMode;
-      if (batchId) filters.batchId = batchId;
-      if (startDate && endDate) filters.batchDate = { $gte: startDate, $lte: endDate };
-  
-      if (keyword) {
-        filters.$or = [
-          { batchStartTiming: { $regex: keyword, $options: 'i' } },
-          { batchEndTiming: { $regex: keyword, $options: 'i' } },
-        ];
-      }
-  
-      const sessions = await Session.find(filters);
-      res.status(200).send({ message: 'Sessions searched successfully', sessions });
-    } catch (error) {
-      res.status(500).send({ message: 'Error searching sessions', error });
-    }
-  };
-  
-  
-  
-
-  
-
-
-
-
-  module.exports={createClassSession, getClassSessions, updateClassSession, deleteClassSession, getClassSessionbyId, searchClassSession }
-  
+module.exports={
+createClassSession,
+getClassSessions,
+getClassSessionById,
+updateClassSession,
+deleteClassSession
+}
