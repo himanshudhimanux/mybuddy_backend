@@ -15,19 +15,14 @@ const classSessionRoutes = require('./routes/classSessionRoutes')
 const batchStudentRoutes = require('./routes/batchStudentRoutes')
 const attendanceRoutes = require('./routes/attendanceRoutes')
 const sessionRoutes = require('./routes/sessionRoutes')
-const batchClassRoutes = require('./routes/batchClassRoutes')
+const batchClassRoutes = require('./routes/batchClassRoutes');
+const corsOptions = require('./utils/corsOptions');
 
 
 const app = express();
 const port = process.env.PORT || 5100;
 
-app.use(cors({
-    origin: 'https://mybuddyfrontend.netlify.app/',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true ,
-    allowedHeaders: ['Content-Type', 'Authorization'],// If you're using cookies or authentication headers
-}));
-
+app.use(cors(corsOptions));  // Apply CORS with the options
 app.use(express.json());
 
 connectDB();
