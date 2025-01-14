@@ -1,4 +1,7 @@
-const Session = require('../models/Session'); 
+const Session = require('../models/Session');
+const BatchClass = require('../models/BatchClass');
+const Teacher = require('../models/Teacher');
+const Subject = require('../models/Subject');
 
 // Create Session Handler
 const createSession = async (req, res) => {
@@ -17,19 +20,31 @@ const createSession = async (req, res) => {
       presentNotification,
     } = req.body;
 
+    // Fetch the batch class, teacher, and subject by name
+    const batchClass = await BatchClass.findOne({ name: batchClassId });
+    const teacher = await Teacher.findOne({ name: teacherId });
+    const subject = await Subject.findOne({ name: subjectId });
+
+    // If any of them is not found, return an error
+    if (!batchClass || !teacher || !subject) {
+      return res.status(400).json({
+        success: false,
+        message: 'Batch Class, Teacher or Subject not found',
+      });
+    }
+
     const sessionData = {
-      batchClassId,
+      batchClassId: batchClass._id,
       batchDate,
       status,
       classType,
       sessionMode,
-      subjectId,
-      teacherId,
+      subjectId: subject._id,
+      teacherId: teacher._id,
       sessionType,
       scheduleDetails,
       absentNotification,
       presentNotification,
-      // createdBy: req.user.userId
     };
 
     // Generate multiple sessions based on sessionType
@@ -90,6 +105,8 @@ const generateSessions = (data) => {
 
   return sessions;
 };
+
+
 
 
 // Get all sessions with search, pagination, and filtering
