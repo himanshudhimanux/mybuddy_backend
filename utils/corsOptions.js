@@ -1,7 +1,7 @@
 const corsOptions = {
     origin: (origin, callback) => {
       const allowedOrigins = [
-        process.env.PRODUCTION_URL,  // Your production frontend URL
+        "https://mybuddyfrontend.netlify.app",  // Your production frontend URL
         // process.env.LOCALHOST_URL,               // Your local development frontend
       ];
   
