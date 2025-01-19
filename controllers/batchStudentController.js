@@ -1,7 +1,8 @@
 const BatchStudent = require('../models/BatchStudentSchema');
 const Batch = require('../models/BatchSchema'); 
+const Course = require('../models/Course');
 
-// Create Batch Student
+
 const createBatchStudent = async (req, res) => {
     try {
         const {
@@ -10,21 +11,31 @@ const createBatchStudent = async (req, res) => {
             payableFees,
             discountComment,
             installmentType,
+            numberOfInstallments,
+            status,
         } = req.body;
+
+        // Check for missing fields
+        if (!studentId || !batchId || !payableFees || !installmentType || !numberOfInstallments) {
+            return res.status(400).json({ message: 'All required fields must be provided.' });
+        }
 
         const existingStudent = await BatchStudent.findOne({ studentId, batchId });
         if (existingStudent) {
             return res.status(400).json({ message: 'Student already added to this batch' });
         }
 
-        const batch = await Batch.findById(batchId).populate('courseIds');
-        console.warn(batch)
-        if (!batch || !batch.courseIds) {
-            return res.status(404).json({ message: 'Batch or associated course not found' });
+        const batch = await Batch.findById(batchId);
+        if (!batch) {
+            return res.status(404).json({ message: 'Batch not found' });
         }
 
-        const totalCourseFees = courseIds.courseFee;
-        console.log(totalCourseFees)
+        const courses = await Course.find({ '_id': { $in: batch.courseIds } });
+        if (!courses || courses.length === 0) {
+            return res.status(400).json({ message: 'No courses found for this batch.' });
+        }
+
+        const totalCourseFees = courses.reduce((total, course) => total + course.courseFee, 0);
 
         const lastStudent = await BatchStudent.find({ batchId }).sort({ studentRollNo: -1 }).limit(1);
         const studentRollNo = lastStudent.length > 0 ? lastStudent[0].studentRollNo + 1 : 1;
@@ -33,12 +44,14 @@ const createBatchStudent = async (req, res) => {
             studentId,
             studentRollNo,
             batchId,
+            status,
             joiningDate: new Date(),
             payableFees,
             totalCourseFees,
             discountComment,
             installmentType,
-            createdBy: req.user.userId,
+            numberOfInstallments,
+            createdBy: req.user?.userId || null,
         });
 
         await batchStudent.save();
@@ -48,6 +61,7 @@ const createBatchStudent = async (req, res) => {
         res.status(500).json({ message: 'Error creating batch student', error });
     }
 };
+
 
 // Get All Batch Students
 const getBatchStudents = async (req, res) => {
