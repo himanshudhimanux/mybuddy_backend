@@ -1,4 +1,5 @@
 const User = require('../models/UserModel');
+const Student = require("../models/Student");
 const generateToken = require('../utils/jwtUtils');
 const bcrypt = require('bcrypt');
 
@@ -39,4 +40,69 @@ const userLogin = async (req, res) => {
 };
 
 
-module.exports={userRegsiter, userLogin}
+
+// Login API (Father Phone)
+const loginWithPhone = async (req, res) => {
+    try {
+        const { fatherPhone } = req.body;
+
+        if (!fatherPhone) {
+            return res.status(400).json({ message: "Father phone number is required" });
+        }
+
+        // Check if phone number exists in the database
+        const students = await Student.find({ fatherPhone });
+
+        if (!students.length) {
+            return res.status(404).json({ message: "No students found for this phone number" });
+        }
+
+        // Generate dummy OTP
+        const otp = "1234"; // For now, it's fixed
+
+        res.status(200).json({ message: "OTP sent successfully", otp }); // In real-world, don't send OTP in response
+    } catch (error) {
+        console.error("Error in loginWithPhone:", error);
+        res.status(500).json({ message: "Server error during login" });
+    }
+};
+
+// OTP Verification API
+const verifyOtp = async (req, res) => {
+    try {
+        const { fatherPhone, otp } = req.body;
+
+        if (!fatherPhone || !otp) {
+            return res.status(400).json({ message: "Phone number and OTP are required" });
+        }
+
+        // Validate OTP (fixed for now)
+        if (otp !== "1234") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // Fetch students associated with the fatherPhone
+        const students = await Student.find({ fatherPhone });
+
+        if (!students.length) {
+            return res.status(404).json({ message: "No students found for this phone number" });
+        }
+
+        // Mark the first student as primary
+        const response = {
+            primaryStudent: students[0],
+            otherStudents: students.slice(1),
+        };
+
+        res.status(200).json({ message: "OTP verified successfully", students: response });
+    } catch (error) {
+        console.error("Error in verifyOtp:", error);
+        res.status(500).json({ message: "Server error during OTP verification" });
+    }
+};
+
+
+
+
+
+module.exports={userRegsiter, userLogin, loginWithPhone, verifyOtp}
