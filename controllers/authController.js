@@ -81,25 +81,13 @@ const verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
-        // Fetch students associated with the fatherPhone
-        const students = await Student.find({ fatherPhone });
-
-        if (!students.length) {
-            return res.status(404).json({ message: "No students found for this phone number" });
-        }
-
-        // Mark the first student as primary
-        const response = {
-            primaryStudent: students[0],
-            otherStudents: students.slice(1),
-        };
-
-        res.status(200).json({ message: "OTP verified successfully", students: response });
+        res.status(200).json({ message: "OTP verified successfully" });
     } catch (error) {
         console.error("Error in verifyOtp:", error);
         res.status(500).json({ message: "Server error during OTP verification" });
     }
 };
+
 
 
 

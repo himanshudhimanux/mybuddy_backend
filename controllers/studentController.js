@@ -130,10 +130,7 @@ const specificStudent = async (req, res) => {
     }
 };
 
-module.exports = { 
-    studentPicUpload: upload.single("photo"), // Middleware for file upload
-    studentRegister, getAllStudent, specificStudent 
-};
+
 
 // PUT: Update Student
 const updateStudent = async (req, res) => {
@@ -207,11 +204,42 @@ const deleteStudent = async (req, res) => {
     }
 };
 
+
+const fetchStudentsByPhone = async (req, res) => {
+    try {
+        const { fatherPhone } = req.body;
+
+        if (!fatherPhone) {
+            return res.status(400).json({ message: "Phone number is required" });
+        }
+
+        // Fetch students associated with the fatherPhone
+        const students = await Student.find({ fatherPhone });
+
+        if (!students.length) {
+            return res.status(404).json({ message: "No students found for this phone number" });
+        }
+
+        // Mark the first student as primary
+        const response = {
+            primaryStudent: students[0],
+            otherStudents: students.slice(1),
+        };
+
+        res.status(200).json({ message: "Students fetched successfully", students: response });
+    } catch (error) {
+        console.error("Error in fetchStudentsByPhone:", error);
+        res.status(500).json({ message: "Server error while fetching students" });
+    }
+};
+
+
 module.exports = { 
     studentPicUpload: upload.single("photo"), // Middleware for file upload
     studentRegister, 
     getAllStudent, 
     specificStudent, 
     updateStudent, 
-    deleteStudent 
+    deleteStudent ,
+    fetchStudentsByPhone
 };
