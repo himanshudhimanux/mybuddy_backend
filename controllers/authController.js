@@ -2,6 +2,7 @@ const User = require('../models/UserModel');
 const Student = require("../models/Student");
 const generateToken = require('../utils/jwtUtils');
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
 
 const userRegsiter = async (req, res) => {
 
@@ -67,7 +68,29 @@ const loginWithPhone = async (req, res) => {
     }
 };
 
-// OTP Verification API
+// // OTP Verification API
+// const verifyOtp = async (req, res) => {
+//     try {
+//         const { fatherPhone, otp } = req.body;
+
+//         if (!fatherPhone || !otp) {
+//             return res.status(400).json({ message: "Phone number and OTP are required" });
+//         }
+
+//         // Validate OTP (fixed for now)
+//         if (otp !== "1234") {
+//             return res.status(400).json({ message: "Invalid OTP" });
+//         }
+
+//         res.status(200).json({ message: "OTP verified successfully" });
+//     } catch (error) {
+//         console.error("Error in verifyOtp:", error);
+//         res.status(500).json({ message: "Server error during OTP verification" });
+//     }
+// };
+
+
+
 const verifyOtp = async (req, res) => {
     try {
         const { fatherPhone, otp } = req.body;
@@ -76,18 +99,20 @@ const verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Phone number and OTP are required" });
         }
 
-        // Validate OTP (fixed for now)
+        // Validate OTP
         if (otp !== "1234") {
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
-        res.status(200).json({ message: "OTP verified successfully" });
+        // Generate JWT Token
+        const token = jwt.sign({ fatherPhone }, "JWT_SECRET", { expiresIn: "7d" });
+
+        res.status(200).json({ message: "OTP verified successfully", token });
     } catch (error) {
         console.error("Error in verifyOtp:", error);
         res.status(500).json({ message: "Server error during OTP verification" });
     }
 };
-
 
 
 

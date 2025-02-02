@@ -7,7 +7,7 @@ router.post('/student', studentPicUpload, verifyToken, roleCheck('admin'), stude
 router.get('/students', verifyToken, roleCheck('admin', 'teacher'), getAllStudent);
 router.get('/students/:id', verifyToken, roleCheck('admin', 'teacher'), specificStudent);
 
-router.get('/fetch-students', verifyToken, fetchStudentsByPhone)
+router.get('/fetch-students', fetchStudentsByPhone)
 
 router.put("/:id", studentPicUpload, updateStudent); // Update a specific student
 router.delete("/:id", deleteStudent); // Delete a specific student
