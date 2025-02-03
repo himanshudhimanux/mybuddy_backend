@@ -68,29 +68,6 @@ const loginWithPhone = async (req, res) => {
     }
 };
 
-// // OTP Verification API
-// const verifyOtp = async (req, res) => {
-//     try {
-//         const { fatherPhone, otp } = req.body;
-
-//         if (!fatherPhone || !otp) {
-//             return res.status(400).json({ message: "Phone number and OTP are required" });
-//         }
-
-//         // Validate OTP (fixed for now)
-//         if (otp !== "1234") {
-//             return res.status(400).json({ message: "Invalid OTP" });
-//         }
-
-//         res.status(200).json({ message: "OTP verified successfully" });
-//     } catch (error) {
-//         console.error("Error in verifyOtp:", error);
-//         res.status(500).json({ message: "Server error during OTP verification" });
-//     }
-// };
-
-
-
 const verifyOtp = async (req, res) => {
     try {
         const { fatherPhone, otp } = req.body;
