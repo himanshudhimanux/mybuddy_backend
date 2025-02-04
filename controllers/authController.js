@@ -82,7 +82,7 @@ const verifyOtp = async (req, res) => {
         }
 
         // Generate JWT Token
-        const token = jwt.sign({ fatherPhone }, "JWT_SECRET", { expiresIn: "7d" });
+        const token = jwt.sign({ fatherPhone }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
         res.status(200).json({ message: "OTP verified successfully", token });
     } catch (error) {

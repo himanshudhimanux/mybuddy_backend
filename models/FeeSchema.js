@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const FeeSchema = new mongoose.Schema({
   student_id: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
-  batch_student_id: { type: mongoose.Schema.Types.ObjectId, ref: "Batch", required: true },
+  batch_student_id: { type: mongoose.Schema.Types.ObjectId, ref: "BatchStudent", required: true },
   status: { type: String, enum: ["Not-Paid", "Partial-Paid", "Fully-Paid", "Forcefully-Settled"], required: true },
   amount_to_be_paid: { type: Number, required: true },
   amount_paid: { type: Number, default: 0 },
