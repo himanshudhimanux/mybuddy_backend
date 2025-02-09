@@ -25,6 +25,7 @@ const port = process.env.PORT || 5100;
 
 app.use(cors(corsOptions));  // Apply CORS with the options
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 

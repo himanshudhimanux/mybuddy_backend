@@ -205,31 +205,61 @@ const deleteStudent = async (req, res) => {
 };
 
 
-const fetchStudentsByPhone = async (req, res) => {
+// ✅ 1. Get students by fatherPhone
+const getStudentsByFatherPhone = async (req, res) => {
     try {
-        const { fatherPhone } = req.body;
+        
+        const { fatherPhone } = req.query;
 
         if (!fatherPhone) {
-            return res.status(400).json({ message: "Phone number is required" });
+            return res.status(400).json({ success: false, message: "Father phone number is required" });
         }
 
-        // Fetch students associated with the fatherPhone
-        const students = await Student.find({ fatherPhone });
+        const phoneNumber = Number(fatherPhone);
+        const students = await Student.find({ fatherPhone: phoneNumber });
 
         if (!students.length) {
-            return res.status(404).json({ message: "No students found for this phone number" });
+            return res.status(404).json({ success: false, message: "No students found for this phone number" });
         }
 
-        // Mark the first student as primary
-        const response = {
-            primaryStudent: students[0],
-            otherStudents: students.slice(1),
-        };
+        return res.status(200).json({
+            success: true,
+            message: "Students fetched successfully",
+            students,
+        });
 
-        res.status(200).json({ message: "Students fetched successfully", students: response });
     } catch (error) {
-        console.error("Error in fetchStudentsByPhone:", error);
-        res.status(500).json({ message: "Server error while fetching students" });
+        console.error("Error fetching students:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+
+// ✅ 2. Switch Student Profile
+const switchStudentProfile = async (req, res) => {
+    try {
+        const { studentId } = req.body;
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: "Student ID is required to switch profile" });
+        }
+
+        // ✅ Find student by ID
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile switched successfully",
+            student,
+        });
+
+    } catch (error) {
+        console.error("Error switching profile:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
@@ -241,5 +271,6 @@ module.exports = {
     specificStudent, 
     updateStudent, 
     deleteStudent ,
-    fetchStudentsByPhone
+    getStudentsByFatherPhone, 
+    switchStudentProfile
 };
