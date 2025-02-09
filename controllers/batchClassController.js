@@ -10,30 +10,28 @@ const createBatchClass = async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 };
-// 2. Get Batch Classes (with filters and pagination)
+
 const getBatchClasses = async (req, res) => {
     try {
         const { page = 1, limit = 10, status, facultyId } = req.query;
-        const filters = {};
-        if (status) filters.status = status;
-        if (facultyId) filters.facultyIds = facultyId;
-        const batchClasses = await BatchClass.find(filters)
-            .skip((page - 1) * limit)
-            .limit(parseInt(limit))
-            .populate("batchId facultyIds createdBy", "name") // Adjust fields as needed
-            .sort({ createdDate: -1 });
-        const total = await BatchClass.countDocuments(filters);
-        res.json({
-            success: true,
-            data: batchClasses,
-            total,
-            page: parseInt(page),
-            pages: Math.ceil(total / limit),
-        });
+        const filters = { ...(status && { status }), ...(facultyId && { facultyIds: facultyId }) };
+
+        const [batchClasses, total] = await Promise.all([
+            BatchClass.find(filters)
+                .skip((page - 1) * limit)
+                .limit(+limit)
+                .populate("batchId facultyIds createdBy", "name")
+                .sort({ createdDate: -1 }),
+            BatchClass.countDocuments(filters),
+        ]);
+
+        res.json({ success: true, data: batchClasses, total, page: +page, pages: Math.ceil(total / limit) });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
 // 3. Get a Single Batch Class by ID
 const getBatchClassById = async (req, res) => {
     try {
