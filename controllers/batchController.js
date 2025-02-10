@@ -1,4 +1,5 @@
 const Batch = require('../models/BatchSchema');
+const BatchStudent = require('../models/BatchStudentSchema')
 
 // Create a new batch
 const createBatch = async (req, res) => {
@@ -136,4 +137,36 @@ const deleteBatch = async (req, res) => {
 };
 
 
-module.exports={createBatch, getAllBatches, updateBatch, deleteBatch, getBatchById}
+const getStudentBatches = async (req, res) => {
+  try {
+      const { studentId } = req.params;
+
+      if (!studentId) {
+          return res.status(400).json({ success: false, message: "Student ID is required" });
+      }
+
+      // ✅ Find all batch enrollments for the student
+      const batchEnrollments = await BatchStudent.find({ studentId }).populate("batchId");
+
+      if (!batchEnrollments.length) {
+          return res.status(404).json({ success: false, message: "No batches found for this student" });
+      }
+
+      // ✅ Extract batch details
+      const batches = batchEnrollments.map(enrollment => enrollment.batchId);
+
+      return res.status(200).json({
+          success: true,
+          batches,
+      });
+
+  } catch (error) {
+      console.error("Error fetching student batches:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
+
+module.exports={createBatch, getAllBatches, updateBatch, deleteBatch, getBatchById, getStudentBatches}

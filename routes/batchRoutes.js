@@ -1,5 +1,5 @@
 const express = require('express');
-const { createBatch, getAllBatches, updateBatch, deleteBatch } = require('../controllers/batchController');
+const { createBatch, getAllBatches, updateBatch, deleteBatch, getStudentBatches } = require('../controllers/batchController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.put('/update-batch/:id', verifyToken, roleCheck('admin'), updateBatch);
 
 // Delete a batch
 router.delete('/delete-batch/:id', verifyToken, roleCheck('admin'), deleteBatch);
+
+router.get("/student/batches/:studentId/", verifyToken, getStudentBatches);
+
 
 module.exports = router;
