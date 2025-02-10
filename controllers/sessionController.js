@@ -2,6 +2,7 @@ const Session = require('../models/Session');
 const BatchClass = require('../models/BatchClass');
 const Teacher = require('../models/Teacher');
 const Subject = require('../models/Subject');
+const Attendance = require('../models/AttendanceSchema')
 
 // Create Session Handler
 const createSession = async (req, res) => {
@@ -21,9 +22,14 @@ const createSession = async (req, res) => {
     } = req.body;
 
     // Fetch the batch class, teacher, and subject by name
-    const batchClass = await BatchClass.findOne({ name: batchClassId });
-    const teacher = await Teacher.findOne({ name: teacherId });
-    const subject = await Subject.findOne({ name: subjectId });
+    const batchClass = await BatchClass.findOne({ _id: batchClassId });
+    const teacher = await Teacher.findOne({ _id: teacherId });
+    const subject = await Subject.findOne({ _id: subjectId });
+    
+    console.log("Batch Class ID", batchClass);
+    console.log("Teacher", teacher)
+    console.log("subject", teacher)
+
 
     // If any of them is not found, return an error
     if (!batchClass || !teacher || !subject) {
@@ -33,6 +39,9 @@ const createSession = async (req, res) => {
       });
     }
 
+
+
+    
     const sessionData = {
       batchClassId: batchClass._id,
       batchDate,
@@ -226,11 +235,81 @@ const getSessionsByType = async (req, res) => {
 };
 
 
+const getStudentSessionsAndAttendance = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Fetch all sessions where this student is enrolled
+    const sessions = await Session.find({ "batchClassId": { $exists: true } })
+      .populate('batchClassId', 'name') // Fetch batch class name
+      .populate('subjectId', 'name') // Fetch subject name
+      .populate('teacherId', 'name') // Fetch teacher name
+      .sort({ batchDate: 1 });
+
+    console.log("Sessions", sessions)
+
+    // Extract session IDs
+    const sessionIds = sessions.map(session => session._id);
+
+    console.log("Session Id", sessionIds)
+
+    // Fetch attendance records for this student for the given sessions
+    const attendanceRecords = await Attendance.find({
+      studentId,
+      sessionId: { $in: sessionIds }
+    });
+
+    console.log("Attendance Record", attendanceRecords)
+
+    // Map sessions with attendance status
+    const sessionData = sessions.map(session => {
+      const attendance = attendanceRecords.find(
+        att => att.sessionId.toString() === session._id.toString()
+      );
+
+      return {
+        sessionId: session._id,
+        batchDate: session.batchDate,
+        subject: session.subjectId.name, // Subject name
+        teacher: session.teacherId.name, // Teacher name
+        batchClass: session.batchClassId.name, // Batch class name
+        classType: session.classType,
+        sessionMode: session.sessionMode,
+        sessionType: session.sessionType,
+        status: session.status,
+        attended: !!attendance, // Boolean: true if attended, false otherwise
+        attendanceDetails: attendance
+          ? {
+              attendanceDate: attendance.attendanceDate,
+              attendanceTime: attendance.attendanceTime,
+              attendanceSource: attendance.attendanceSource,
+              attendanceType: attendance.attendanceType, // 'In' or 'Out'
+              notificationSent: attendance.notificationSent || []
+            }
+          : null // If no attendance record, return null
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: sessionData
+    });
+  } catch (error) {
+    console.error("Error fetching student sessions and attendance:", error);
+    res.status(500).json({ success: false, message: "Error fetching data" });
+  }
+};
+
+
+
+
+
 module.exports = {
   createSession,
   getSessions,
   getSessionById,
   updateSession,
   deleteSession,
-  getSessionsByType
+  getSessionsByType,
+  getStudentSessionsAndAttendance
 };

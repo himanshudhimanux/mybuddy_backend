@@ -1,7 +1,8 @@
 const Attendance = require('../models/AttendanceSchema');
 const BatchStudent = require('../models/BatchStudentSchema');
 const Student = require('../models/Student');
-const ClassSession = require('../models/ClassSessionSchema');
+const Session = require('../models/Session');
+const mongoose = require('mongoose');
 
 // Create Attendance
 const createAttendance = async (req, res) => {
@@ -9,7 +10,16 @@ const createAttendance = async (req, res) => {
         const { sessionId, studentId, attendanceDate, attendanceTime, attendanceSource, attendanceType, notificationSent } = req.body;
 
         // Check if the student is part of the batch associated with this session
-        const isStudentInBatch = await BatchStudent.findOne({ studentId, batchId: req.body.batchId });
+        // Check if the student is part of the batch
+        const isStudentInBatch = await BatchStudent.findOne({
+            studentId: new mongoose.Types.ObjectId(studentId),
+        });
+
+        console.log("Checking for student:", studentId);
+
+        console.log("isStudentInBatch", isStudentInBatch);
+
+
         if (!isStudentInBatch) {
             return res.status(400).json({ message: 'Student is not part of the batch for this session' });
         }
@@ -112,7 +122,7 @@ const deleteAttendance = async (req, res) => {
 const getEligibleStudents = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const session = await ClassSession.findById(sessionId).populate('batchId');
+        const session = await Session.findById(sessionId).populate('batchId');
         if (!session) return res.status(404).json({ message: 'Session not found' });
 
         const batchStudents = await BatchStudent.find({ batchId: session.batchId }).populate('studentId', 'name');

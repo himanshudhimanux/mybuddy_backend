@@ -19,9 +19,9 @@ const attendanceSchema = new mongoose.Schema({
     type: String,  // You can use String or Number (time in hours and minutes, e.g., 14:30)
     required: true 
   },
-  source: {
+  attendanceSource: {
     type: String,
-    enum: ['Face', 'Manual', 'RF Id Card'],
+    enum: ['Face', 'Manual_using_portal', 'RF_Id_Card'],
     required: true
   },
   attendanceType: {
