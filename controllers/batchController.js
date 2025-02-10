@@ -54,7 +54,7 @@ const getBatchById = async (req, res) => {
     const batch = await Batch.findById(id)
       .populate('sessionYearId')
       .populate('locationId')
-      .populate('courseIds');
+      .populate('courseIds', 'name');
 
     if (!batch) {
       return res.status(404).json({ message: 'Batch not found' });
@@ -146,7 +146,11 @@ const getStudentBatches = async (req, res) => {
       }
 
       // ✅ Find all batch enrollments for the student
-      const batchEnrollments = await BatchStudent.find({ studentId }).populate("batchId");
+      const batchEnrollments = await BatchStudent.find({ studentId })
+          .populate({
+              path: "batchId",
+              populate: { path: "courseIds", select: "name" } // Populate course name
+          });
 
       if (!batchEnrollments.length) {
           return res.status(404).json({ success: false, message: "No batches found for this student" });
