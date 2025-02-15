@@ -301,6 +301,27 @@ const getStudentSessionsAndAttendance = async (req, res) => {
 };
 
 
+const getUpcomingSessions = async (req, res) => {
+  try {
+      console.log("Request User:", req.user); // ✅ Debugging
+
+      const today = new Date();
+      const next7Days = new Date();
+      next7Days.setDate(today.getDate() + 7);
+
+      const upcomingSessions = await Session.find({
+          batchDate: { $gte: today, $lte: next7Days }
+      }).sort({ batchDate: 1 });
+
+      res.status(200).json({ success: true, data: upcomingSessions });
+  } catch (error) {
+      console.error('Error fetching upcoming sessions:', error);
+      res.status(500).json({ success: false, message: 'Error fetching upcoming sessions' });
+  }
+};
+
+
+
 
 
 
@@ -311,5 +332,6 @@ module.exports = {
   updateSession,
   deleteSession,
   getSessionsByType,
-  getStudentSessionsAndAttendance
+  getStudentSessionsAndAttendance,
+  getUpcomingSessions
 };
