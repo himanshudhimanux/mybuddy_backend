@@ -14,6 +14,6 @@ router.get("/sessions/type/:type", verifyToken, roleCheck('admin'), getSessionsB
 // Get sessions and attendance for a student
 router.get('/sessions-attendance/:id', verifyToken, getStudentSessionsAndAttendance);
 
-router.get("/sessions/upcoming", verifyToken, getUpcomingSessions);
+router.get("/upcoming-classess", verifyToken,  getUpcomingSessions);
 
 module.exports = router;

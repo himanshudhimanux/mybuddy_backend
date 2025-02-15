@@ -303,14 +303,20 @@ const getStudentSessionsAndAttendance = async (req, res) => {
 
 const getUpcomingSessions = async (req, res) => {
   try {
-      console.log("Request User:", req.user); // ✅ Debugging
+      console.log("Request Query:", req.query); // ✅ Debugging
 
-      const today = new Date();
-      const next7Days = new Date();
-      next7Days.setDate(today.getDate() + 7);
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+          return res.status(400).json({ success: false, message: "startDate and endDate are required" });
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Ensure full day is covered
 
       const upcomingSessions = await Session.find({
-          batchDate: { $gte: today, $lte: next7Days }
+          batchDate: { $gte: start, $lte: end }
       }).sort({ batchDate: 1 });
 
       res.status(200).json({ success: true, data: upcomingSessions });
@@ -319,8 +325,6 @@ const getUpcomingSessions = async (req, res) => {
       res.status(500).json({ success: false, message: 'Error fetching upcoming sessions' });
   }
 };
-
-
 
 
 
