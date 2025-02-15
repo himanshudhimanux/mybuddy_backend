@@ -303,7 +303,6 @@ const getStudentSessionsAndAttendance = async (req, res) => {
 
 const getUpcomingSessions = async (req, res) => {
   try {
-      console.log("Request Query:", req.query); // ✅ Debugging
 
       const { startDate, endDate } = req.query;
 
@@ -311,13 +310,17 @@ const getUpcomingSessions = async (req, res) => {
           return res.status(400).json({ success: false, message: "startDate and endDate are required" });
       }
 
+
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999); // Ensure full day is covered
 
       const upcomingSessions = await Session.find({
           batchDate: { $gte: start, $lte: end }
-      }).sort({ batchDate: 1 });
+      }).sort({ batchDate: 1 })      .populate("subjectId", "name") // Get only the subject name
+      .populate("teacherId", "name"); // Get only the teacher name;
+
+
 
       res.status(200).json({ success: true, data: upcomingSessions });
   } catch (error) {
