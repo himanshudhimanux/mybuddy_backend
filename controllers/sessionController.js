@@ -244,14 +244,11 @@ const getStudentSessionsAndAttendance = async (req, res) => {
       .populate('batchClassId', 'name') // Fetch batch class name
       .populate('subjectId', 'name') // Fetch subject name
       .populate('teacherId', 'name') // Fetch teacher name
+      .populate('scheduleDetails') // ✅ Correct - This will fetch the entire object
       .sort({ batchDate: 1 });
-
-    console.log("Sessions", sessions)
 
     // Extract session IDs
     const sessionIds = sessions.map(session => session._id);
-
-    console.log("Session Id", sessionIds)
 
     // Fetch attendance records for this student for the given sessions
     const attendanceRecords = await Attendance.find({
@@ -259,7 +256,7 @@ const getStudentSessionsAndAttendance = async (req, res) => {
       sessionId: { $in: sessionIds }
     });
 
-    console.log("Attendance Record", attendanceRecords)
+
 
     // Map sessions with attendance status
     const sessionData = sessions.map(session => {
@@ -277,6 +274,16 @@ const getStudentSessionsAndAttendance = async (req, res) => {
         sessionMode: session.sessionMode,
         sessionType: session.sessionType,
         status: session.status,
+        scheduleDetails: {
+          startDate: session.scheduleDetails?.startDate,
+          endDate: session.scheduleDetails?.endDate,
+          startTime: session.scheduleDetails?.startTime,
+          endTime: session.scheduleDetails?.endTime,
+          weeklyDays: session.scheduleDetails?.weeklyDays || [],
+          repeatEvery: session.scheduleDetails?.repeatEvery,
+          onDay: session.scheduleDetails?.onDay,
+          onThe: session.scheduleDetails?.onThe
+        },
         attended: !!attendance, // Boolean: true if attended, false otherwise
         attendanceDetails: attendance
           ? {
