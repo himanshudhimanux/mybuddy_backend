@@ -17,6 +17,8 @@ const sessionRoutes = require('./routes/sessionRoutes')
 const batchClassRoutes = require('./routes/batchClassRoutes');
 const corsOptions = require('./utils/corsOptions');
 const noticeRoutes = require('./routes/noticeRoutes')
+const feeRoutes = require('./routes/feeRoutes');
+const feeHistoryRoutes = require('./routes/feeHistoryRoutes')
 
 
 const app = express();
@@ -48,6 +50,8 @@ app.use('/api', attendanceRoutes)
 app.use('/api', sessionRoutes)
 app.use('/api', batchClassRoutes)
 app.use('/api', noticeRoutes)
+app.use("/api/fees", feeRoutes);
+app.use("/api/fees/history", feeHistoryRoutes);
 
 // ========= Routes end=============
 

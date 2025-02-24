@@ -5,7 +5,7 @@ const FeeHistorySchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     mode_of_payment: { 
       type: String, 
-      enum: ["Cash", "Payment Gateway", "Cheque", "NEFT/RTGS", "UPI"], 
+      enum: ["Cash", "Payment Gateway", "Cheque", "UPI"], 
       required: true 
     },
     reference_id: { type: String },
