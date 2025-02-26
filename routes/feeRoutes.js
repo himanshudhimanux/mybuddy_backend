@@ -10,9 +10,9 @@ router.delete("/fee/:id", feeController.deleteFee);
 router.get("/receipt/:feeId", feeController.generateFeeReceipt);
 
 // ✅ Get Fee Details by Student ID
-router.get("/student/:studentId", feeController.getFeeByStudentId);
+router.get("/student/:id", feeController.getFeeByStudentId);
 
 // ✅ Get Fee Payment History by Student ID
-router.get("/history/:studentId", feeController.getFeeHistoryByStudentId);
+router.get("/:id", feeController.getFeeHistoryByStudentId);
 
 module.exports = router;

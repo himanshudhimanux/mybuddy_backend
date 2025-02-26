@@ -58,6 +58,8 @@ const getFeeByStudentId = async (req, res) => {
   try {
     const { studentId } = req.params;
 
+    console.log("student id", studentId);
+
     const fees = await Fee.find({ student_id: studentId })
       .populate("student_id batch_student_id created_by updated_by");
 
