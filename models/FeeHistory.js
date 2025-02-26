@@ -1,11 +1,11 @@
 const { default: mongoose } = require("mongoose");
 
 const FeeHistorySchema = new mongoose.Schema({
-    fees_id: { type: mongoose.Schema.Types.ObjectId, ref: "FeeTable", required: true },
+    fees_id: { type: mongoose.Schema.Types.ObjectId, ref: "Fee", required: true },
     amount: { type: Number, required: true },
     mode_of_payment: { 
       type: String, 
-      enum: ["Cash", "Payment Gateway", "Cheque", "UPI"], 
+      enum: ["Cash", "Payment_Gateway", "Cheque", "NEFT_RTGS", "UPI"], 
       required: true 
     },
     reference_id: { type: String },

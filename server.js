@@ -51,7 +51,7 @@ app.use('/api', sessionRoutes)
 app.use('/api', batchClassRoutes)
 app.use('/api', noticeRoutes)
 app.use("/api", feeRoutes);
-app.use("/api/fees/history", feeHistoryRoutes);
+app.use("/api", feeHistoryRoutes);
 
 // ========= Routes end=============
 

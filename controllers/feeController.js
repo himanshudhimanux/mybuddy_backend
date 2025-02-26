@@ -76,7 +76,9 @@ const getFeeByStudentId = async (req, res) => {
 // ✅ Get Fee Payment History by Student ID
 const getFeeHistoryByStudentId = async (req, res) => {
   try {
-    const { studentId } = req.params;
+    const { studentId } = req.body;
+
+    console.log("student id", studentId)
 
     // Find fees associated with the student
     const fees = await Fee.find({ student_id: studentId }).select("_id");

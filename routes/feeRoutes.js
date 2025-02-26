@@ -13,6 +13,6 @@ router.get("/receipt/:feeId", feeController.generateFeeReceipt);
 router.get("/student/:id", feeController.getFeeByStudentId);
 
 // ✅ Get Fee Payment History by Student ID
-router.get("/:id", feeController.getFeeHistoryByStudentId);
+router.get("/fee/history/student/:id", feeController.getFeeHistoryByStudentId);
 
 module.exports = router;
