@@ -82,6 +82,7 @@ const getFeeHistoryByStudentId = async (req, res) => {
 
     // Find fees associated with the student
     const fees = await Fee.find({ student_id: studentId }).select("_id");
+    console.log("fee data", fees)
     if (!fees.length) {
       return res.status(404).json({ message: "No fee records found for this student" });
     }
