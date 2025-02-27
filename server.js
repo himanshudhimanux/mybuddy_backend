@@ -18,7 +18,8 @@ const batchClassRoutes = require('./routes/batchClassRoutes');
 const corsOptions = require('./utils/corsOptions');
 const noticeRoutes = require('./routes/noticeRoutes')
 const feeRoutes = require('./routes/feeRoutes');
-const feeHistoryRoutes = require('./routes/feeHistoryRoutes')
+const feeHistoryRoutes = require('./routes/feeHistoryRoutes');
+const razorpayRoutes = require('./routes/razorpayRoutes')
 
 
 const app = express();
@@ -52,6 +53,7 @@ app.use('/api', batchClassRoutes)
 app.use('/api', noticeRoutes)
 app.use("/api", feeRoutes);
 app.use("/api", feeHistoryRoutes);
+app.use("/api", razorpayRoutes);
 
 // ========= Routes end=============
 
