@@ -6,15 +6,21 @@ exports.getStudentActiveFees = async (req, res) => {
   try {
       const { studentId } = req.params;
 
+      console.log("studentId", studentId);
+
       if (!studentId) {
           return res.status(400).json({ error: "Student ID is required" });
       }
 
-      // Student ki outstanding fees nikalna
+      // Fetch student's active fees with batch details
       const fees = await Fee.find({
           student_id: studentId,
-          status: { $in: ["Not-Paid", "Partial-Paid"] } // Sirf unpaid ya partial paid fee show hogi
-      }).populate("batch_student_id");
+          status: { $in: ["Not-Paid", "Partial-Paid"] }
+      })
+      .populate({
+          path: "batch_student_id",
+          populate: { path: "batchId", select: "name" } // Fetch only the batch name
+      });
 
       res.status(200).json({ success: true, fees });
   } catch (error) {
@@ -23,36 +29,34 @@ exports.getStudentActiveFees = async (req, res) => {
   }
 };
 
-
-
-// 🔹 छात्र की फीस डिटेल्स प्राप्त करें
+// 🔹 student all fee details
 exports.getStudentFeeDetails = async (req, res) => {
   try {
     const { studentId } = req.params;
     const fee = await Fee.findOne({ student_id: studentId });
 
     if (!fee) {
-      return res.status(404).json({ message: "फीस डिटेल्स नहीं मिली।" });
+      return res.status(404).json({ message: "Fee not found" });
     }
 
     res.json(fee);
   } catch (error) {
-    res.status(500).json({ message: "कुछ गलत हुआ।", error });
+    res.status(500).json({ message: "Somthing went wrong", error });
   }
 };
 
-// 🔹 नए भुगतान को प्रोसेस करें
+// 🔹 New payment process
 exports.processPayment = async (req, res) => {
   try {
     const { studentId, amount, mode_of_payment, reference_id, transaction_no } = req.body;
 
-    // छात्र की फीस डिटेल्स प्राप्त करें
+    // get student fee
     let fee = await Fee.findOne({ student_id: studentId });
     if (!fee) {
-      return res.status(404).json({ message: "छात्र की फीस जानकारी नहीं मिली।" });
+      return res.status(404).json({ message: "student fee not found" });
     }
 
-    // नया भुगतान रिकॉर्ड बनाएं
+    // New payment save
     const payment = new FeeHistory({
       fees_id: fee._id,
       amount,
@@ -64,35 +68,35 @@ exports.processPayment = async (req, res) => {
 
     await payment.save();
 
-    // फीस अपडेट करें
+    // update fee
     fee.amount_paid += amount;
     fee.amount_pending = fee.amount_to_be_paid - fee.amount_paid;
     fee.status = fee.amount_paid >= fee.amount_to_be_paid ? "Fully-Paid" : "Partial-Paid";
 
     await fee.save();
 
-    res.json({ message: "भुगतान सफल रहा!", payment, fee });
+    res.json({ message: "Payment Sucessfull", payment, fee });
   } catch (error) {
-    res.status(500).json({ message: "भुगतान प्रक्रिया में त्रुटि।", error });
+    res.status(500).json({ message: "Payment Error", error });
   }
 };
 
-// 🔹 छात्र का पूरा भुगतान इतिहास देखें
+// 🔹 Student payment history
 exports.getPaymentHistory = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // छात्र की फीस ढूंढें
+    // Find student feee
     const fee = await Fee.findOne({ student_id: studentId });
     if (!fee) {
-      return res.status(404).json({ message: "फीस रिकॉर्ड नहीं मिला।" });
+      return res.status(404).json({ message: "Fee record not found" });
     }
 
-    // भुगतान इतिहास प्राप्त करें
+    // get payment history
     const payments = await FeeHistory.find({ fees_id: fee._id });
 
     res.json(payments);
   } catch (error) {
-    res.status(500).json({ message: "भुगतान इतिहास प्राप्त करने में त्रुटि।", error });
+    res.status(500).json({ message: "Payment History Error", error });
   }
 };
