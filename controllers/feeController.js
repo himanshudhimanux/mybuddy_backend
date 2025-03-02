@@ -47,18 +47,12 @@ exports.getStudentActiveFees = async (req, res) => {
           path: "batch_student_id",
           populate: { path: "batchId", select: "name" } // Fetch batch name
       })
-      .populate("courseId", "name") // Fetch course name
-      .populate("termId", "term start_date end_date") // Fetch term details
       .populate("batch_student_id", "join_date"); // Fetch enrollment date (join_date)
 
       res.status(200).json({ 
           success: true, 
           fees: fees.map(fee => ({
-              course: fee.courseId?.name || "N/A",
-              term: fee.termId?.term || "N/A",
-              term_start_date: fee.termId?.start_date || "N/A",
               enrollment_date: fee.batch_student_id?.join_date || "N/A",
-              term_end_date: fee.termId?.end_date || "N/A",
               total_fees: fee.amount_to_be_paid || 0,
               paid_fees: fee.amount_paid || 0,
               outstanding_fees: fee.amount_pending || 0,
