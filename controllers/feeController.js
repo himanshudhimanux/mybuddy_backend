@@ -2,34 +2,76 @@ const Fee = require("../models/FeeSchema");
 const FeeHistory = require("../models/FeeHistory");
 
 
+// exports.getStudentActiveFees = async (req, res) => {
+//   try {
+//       const { studentId } = req.params;
+
+//       console.log("studentId", studentId);
+
+//       if (!studentId) {
+//           return res.status(400).json({ error: "Student ID is required" });
+//       }
+
+//       // Fetch student's active fees with batch details
+//       const fees = await Fee.find({
+//           student_id: studentId,
+//           status: { $in: ["Not-Paid", "Partial-Paid"] }
+//       })
+//       .populate({
+//           path: "batch_student_id",
+//           populate: { path: "batchId", select: "name" } // Fetch only the batch name
+//       });
+
+//       res.status(200).json({ success: true, fees });
+//   } catch (error) {
+//       console.error("Error fetching student fees:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+// 🔹 student all fee details
+
 exports.getStudentActiveFees = async (req, res) => {
   try {
       const { studentId } = req.params;
-
-      console.log("studentId", studentId);
 
       if (!studentId) {
           return res.status(400).json({ error: "Student ID is required" });
       }
 
-      // Fetch student's active fees with batch details
       const fees = await Fee.find({
           student_id: studentId,
-          status: { $in: ["Not-Paid", "Partial-Paid"] }
+          status: { $in: ["Not-Paid", "Partial-Paid", "Paid"] }
       })
       .populate({
           path: "batch_student_id",
-          populate: { path: "batchId", select: "name" } // Fetch only the batch name
-      });
+          populate: { path: "batchId", select: "name" } // Fetch batch name
+      })
+      .populate("courseId", "name") // Fetch course name
+      .populate("termId", "term start_date end_date") // Fetch term details
+      .populate("batch_student_id", "join_date"); // Fetch enrollment date (join_date)
 
-      res.status(200).json({ success: true, fees });
+      res.status(200).json({ 
+          success: true, 
+          fees: fees.map(fee => ({
+              course: fee.courseId?.name || "N/A",
+              term: fee.termId?.term || "N/A",
+              term_start_date: fee.termId?.start_date || "N/A",
+              enrollment_date: fee.batch_student_id?.join_date || "N/A",
+              term_end_date: fee.termId?.end_date || "N/A",
+              total_fees: fee.amount_to_be_paid || 0,
+              paid_fees: fee.amount_paid || 0,
+              outstanding_fees: fee.amount_pending || 0,
+              course_fees: fee.course_fees || fee.amount_to_be_paid || 0
+          }))
+      });
   } catch (error) {
       console.error("Error fetching student fees:", error);
       res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-// 🔹 student all fee details
+
 exports.getStudentFeeDetails = async (req, res) => {
   try {
     const { studentId } = req.params;
