@@ -1,6 +1,30 @@
 const Fee = require("../models/FeeSchema");
 const FeeHistory = require("../models/FeeHistory");
 
+
+exports.getStudentActiveFees = async (req, res) => {
+  try {
+      const { studentId } = req.params;
+
+      if (!studentId) {
+          return res.status(400).json({ error: "Student ID is required" });
+      }
+
+      // Student ki outstanding fees nikalna
+      const fees = await Fee.find({
+          student_id: studentId,
+          status: { $in: ["Not-Paid", "Partial-Paid"] } // Sirf unpaid ya partial paid fee show hogi
+      }).populate("batch_student_id");
+
+      res.status(200).json({ success: true, fees });
+  } catch (error) {
+      console.error("Error fetching student fees:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
 // 🔹 छात्र की फीस डिटेल्स प्राप्त करें
 exports.getStudentFeeDetails = async (req, res) => {
   try {

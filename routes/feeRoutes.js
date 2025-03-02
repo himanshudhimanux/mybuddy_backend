@@ -3,7 +3,7 @@ const router = express.Router();
 const feeController = require("../controllers/feeController");
 
 // 🔹 छात्र की फीस डिटेल्स प्राप्त करें
-router.get("/fees/:studentId", feeController.getStudentFeeDetails);
+router.get("/fees/:studentId", feeController.getStudentActiveFees);
 
 // 🔹 नया भुगतान करें
 router.post("/fees/pay", feeController.processPayment);
