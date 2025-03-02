@@ -2,34 +2,6 @@ const Fee = require("../models/FeeSchema");
 const FeeHistory = require("../models/FeeHistory");
 
 
-// exports.getStudentActiveFees = async (req, res) => {
-//   try {
-//       const { studentId } = req.params;
-
-//       console.log("studentId", studentId);
-
-//       if (!studentId) {
-//           return res.status(400).json({ error: "Student ID is required" });
-//       }
-
-//       // Fetch student's active fees with batch details
-//       const fees = await Fee.find({
-//           student_id: studentId,
-//           status: { $in: ["Not-Paid", "Partial-Paid"] }
-//       })
-//       .populate({
-//           path: "batch_student_id",
-//           populate: { path: "batchId", select: "name" } // Fetch only the batch name
-//       });
-
-//       res.status(200).json({ success: true, fees });
-//   } catch (error) {
-//       console.error("Error fetching student fees:", error);
-//       res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
-
-// 🔹 student all fee details
 
 exports.getStudentActiveFees = async (req, res) => {
   try {
@@ -47,12 +19,13 @@ exports.getStudentActiveFees = async (req, res) => {
           path: "batch_student_id",
           populate: { path: "batchId", select: "name" } // Fetch batch name
       })
-      .populate("batch_student_id", "join_date"); // Fetch enrollment date (join_date)
+      .populate("batch_student_id", "joiningDate"); // Fetch join date (enrollment date)
 
       res.status(200).json({ 
           success: true, 
           fees: fees.map(fee => ({
-              enrollment_date: fee.batch_student_id?.join_date || "N/A",
+              batch_name: fee.batch_student_id?.batchId?.name || "N/A",
+              enrollment_date: fee.batch_student_id?.joiningDate || "N/A",
               total_fees: fee.amount_to_be_paid || 0,
               paid_fees: fee.amount_paid || 0,
               outstanding_fees: fee.amount_pending || 0,
@@ -64,6 +37,7 @@ exports.getStudentActiveFees = async (req, res) => {
       res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 
 exports.getStudentFeeDetails = async (req, res) => {
