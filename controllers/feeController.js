@@ -17,27 +17,26 @@ exports.getStudentActiveFees = async (req, res) => {
       })
       .populate({
           path: "batch_student_id",
-          populate: { path: "batchId", select: "name" } // Fetch batch name
-      })
-      .populate("batch_student_id", "joiningDate"); // Fetch join date (enrollment date)
+          populate: { path: "batchId", select: "name" } // 🟢 Fetch batch name
+      });
 
-      res.status(200).json({ 
-          success: true, 
+      res.status(200).json({
+          success: true,
           fees: fees.map(fee => ({
-              batch_name: fee.batch_student_id?.batchId?.name || "N/A",
-              enrollment_date: fee.batch_student_id?.joiningDate || "N/A",
+              batch_name: fee.batch_student_id?.batchId?.name || "N/A", // 🟢 Get batch name
+              enrollment_date: fee.batch_student_id?.joiningDate || "N/A", // 🟢 Get joining date
               total_fees: fee.amount_to_be_paid || 0,
               paid_fees: fee.amount_paid || 0,
               outstanding_fees: fee.amount_pending || 0,
               course_fees: fee.course_fees || fee.amount_to_be_paid || 0
           }))
       });
+
   } catch (error) {
       console.error("Error fetching student fees:", error);
       res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 
 
 exports.getStudentFeeDetails = async (req, res) => {
