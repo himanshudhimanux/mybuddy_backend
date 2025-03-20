@@ -3,8 +3,8 @@ const Subject = require('../models/Subject');
 // Create Subject
 const createSubject = async (req, res) => {
   try {
-    const { name, subjecttype, FacultyId } = req.body;
-    const subject = new Subject({ name, subjecttype, FacultyId });
+    const { name, subjecttype, subjectFee, FacultyId } = req.body;
+    const subject = new Subject({ name, subjecttype, FacultyId, subjectFee });
     await subject.save();
     res.status(201).json({ message: 'Subject created successfully', subject });
   } catch (error) {

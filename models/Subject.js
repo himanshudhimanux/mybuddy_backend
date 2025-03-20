@@ -9,6 +9,10 @@ const subjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subjectFee: {
+        type: String,
+        required: true
+    },
     FacultyId: [{
         type: mongoose.Schema.Types.ObjectId, // Correctly define the field's type
         ref: 'Teacher', // Reference the 'Teacher' model

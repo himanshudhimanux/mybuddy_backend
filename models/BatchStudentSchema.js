@@ -26,37 +26,6 @@ const batchStudentSchema = new mongoose.Schema({
     history: [{ type: Object }],
 });
 
-
-batchStudentSchema.post("save", async function (doc, next) {
-    try {
-        const existingFee = await Fee.findOne({ batch_student_id: doc._id });
-
-        // Agar fee entry already hai to naya add na ho
-        if (!existingFee) {
-            const newFee = new Fee({
-                student_id: doc.studentId,
-                batch_student_id: doc._id,
-                status: "Not-Paid",
-                amount_to_be_paid: doc.payableFees,
-                amount_paid: 0,
-                amount_pending: doc.payableFees,
-                course_fees: doc.totalCourseFees || doc.payableFees,
-                no_of_installments: doc.numberOfInstallments,
-                installment_term: doc.installmentType,
-                created_by: doc.createdBy
-            });
-
-            await newFee.save();
-            console.log("Fee entry created successfully!");
-        }
-    } catch (error) {
-        console.error("Error creating fee entry:", error);
-    }
-    next();
-});
-
-
-
 // Create a compound unique index on studentId and batchId
 batchStudentSchema.index({ studentId: 1, batchId: 1 }, { unique: true });
 

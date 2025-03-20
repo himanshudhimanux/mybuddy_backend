@@ -7,6 +7,7 @@ const Attendance = require('../models/AttendanceSchema')
 // Create Session Handler
 const createSession = async (req, res) => {
   try {
+    
     const {
       batchClassId,
       batchDate,
@@ -239,61 +240,68 @@ const getStudentSessionsAndAttendance = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // Fetch all sessions where this student is enrolled
-    const sessions = await Session.find({ "batchClassId": { $exists: true } })
-      .populate('batchClassId', 'name') // Fetch batch class name
-      .populate('subjectId', 'name') // Fetch subject name
-      .populate('teacherId', 'name') // Fetch teacher name
-      .populate('scheduleDetails') // ✅ Correct - This will fetch the entire object
+    // Step 1: Student ka batch aur uske subjects find karna
+    const studentBatch = await Batch.findOne({ studentsEnrolled: studentId }).populate('subjects');
+
+    if (!studentBatch) {
+      return res.status(404).json({ success: false, message: "Student batch not found" });
+    }
+
+    const batchId = studentBatch._id; // Student ka batch ID
+    const studentSubjectIds = studentBatch.subjects.map(subject => subject._id); // Student ke subjects
+
+    // Step 2: Sirf wahi sessions fetch karna jo student ke batch aur subjects se match karein
+    const sessions = await Session.find({
+      batchClassId: batchId, 
+      subjectId: { $in: studentSubjectIds } // Sirf student ke subjects ke sessions fetch karna
+    })
+      .populate('batchClassId', 'name') 
+      .populate('subjectId', 'name') 
+      .populate('teacherId', 'name') 
+      .populate('scheduleDetails') 
       .sort({ batchDate: 1 });
 
     // Extract session IDs
     const sessionIds = sessions.map(session => session._id);
 
-    // Fetch attendance records for this student for the given sessions
+    // Step 3: Student ki attendance fetch karna
     const attendanceRecords = await Attendance.find({
       studentId,
       sessionId: { $in: sessionIds }
     });
 
-
-
-    // Map sessions with attendance status
+    // Step 4: Sessions ke sath attendance map karna
     const sessionData = sessions.map(session => {
-      const attendance = attendanceRecords.find(
-        att => att.sessionId.toString() === session._id.toString()
-      );
+      const attendance = attendanceRecords.find(att => att.sessionId.toString() === session._id.toString());
 
       return {
         sessionId: session._id,
         batchDate: session.batchDate,
-        subject: session.subjectId.name, // Subject name
-        teacher: session.teacherId.name, // Teacher name
-        batchClass: session.batchClassId.name, // Batch class name
+        subject: session.subjectId.name,
+        teacher: session.teacherId.name,
+        batchClass: session.batchClassId.name,
         classType: session.classType,
         sessionMode: session.sessionMode,
         sessionType: session.sessionType,
         status: session.status,
-        scheduleDetails: {
-          startDate: session.scheduleDetails?.startDate,
-          endDate: session.scheduleDetails?.endDate,
-          startTime: session.scheduleDetails?.startTime,
-          endTime: session.scheduleDetails?.endTime,
-          weeklyDays: session.scheduleDetails?.weeklyDays || [],
-          repeatEvery: session.scheduleDetails?.repeatEvery,
-          onDay: session.scheduleDetails?.onDay,
-          onThe: session.scheduleDetails?.onThe
-        },
-        attended: !!attendance, // Boolean: true if attended, false otherwise
-        attendanceDetails: attendance
-          ? {
-              attendanceDate: attendance.attendanceDate,
-              attendanceTime: attendance.attendanceTime,
-              attendanceSource: attendance.attendanceSource,
-              attendanceType: attendance.attendanceType, // 'In' or 'Out'
-              notificationSent: attendance.notificationSent || []
-            }
-          : null // If no attendance record, return null
+        scheduleDetails: session.scheduleDetails ? {
+          startDate: session.scheduleDetails.startDate,
+          endDate: session.scheduleDetails.endDate,
+          startTime: session.scheduleDetails.startTime,
+          endTime: session.scheduleDetails.endTime,
+          weeklyDays: session.scheduleDetails.weeklyDays || [],
+          repeatEvery: session.scheduleDetails.repeatEvery,
+          onDay: session.scheduleDetails.onDay,
+          onThe: session.scheduleDetails.onThe
+        } : null,
+        attended: !!attendance,
+        attendanceDetails: attendance ? {
+          attendanceDate: attendance.attendanceDate,
+          attendanceTime: attendance.attendanceTime,
+          attendanceSource: attendance.attendanceSource,
+          attendanceType: attendance.attendanceType,
+          notificationSent: attendance.notificationSent || []
+        } : null
       };
     });
 
@@ -301,11 +309,13 @@ const getStudentSessionsAndAttendance = async (req, res) => {
       success: true,
       data: sessionData
     });
+
   } catch (error) {
     console.error("Error fetching student sessions and attendance:", error);
     res.status(500).json({ success: false, message: "Error fetching data" });
   }
 };
+
 
 
 const getUpcomingSessions = async (req, res) => {

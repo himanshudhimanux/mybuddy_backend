@@ -20,6 +20,7 @@ const noticeRoutes = require('./routes/noticeRoutes')
 const feeRoutes = require('./routes/feeRoutes');
 const feeHistoryRoutes = require('./routes/feeHistoryRoutes');
 const razorpayRoutes = require('./routes/razorpayRoutes')
+const courseStudentRoutes = require('./routes/courseStudentRoutes');
 
 
 const app = express();
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 })
 
 // ========= Routes=============
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api', studentRoutes);
@@ -54,6 +56,8 @@ app.use('/api', noticeRoutes)
 app.use("/api", feeRoutes);
 app.use("/api", feeHistoryRoutes);
 app.use("/api", razorpayRoutes);
+app.use("/api", courseStudentRoutes)
+
 
 // ========= Routes end=============
 
