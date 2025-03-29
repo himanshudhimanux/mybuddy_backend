@@ -1,93 +1,74 @@
-const CourseStudent = require('../models/CourseStudentSchema');
-const Student = require('../models/Student');
+const CourseStudent = require('../models/CourseStudentSchema'); 
 const Course = require('../models/Course');
+const Subject = require('../models/Subject');
 
-// Enroll a student in a course
-exports.enrollStudent = async (req, res) => {
+const createCourseStudent = async (req, res) => {
     try {
         const {
             studentId,
-            studentRollNo,
             courseId,
-            joiningDate,
+            subjectIds,  // Array of selected subjects
             payableFees,
-            totalCourseFees,
             discountComment,
-            numberOfInstallments,
             installmentType,
-            createdBy
+            numberOfInstallments,
+            status,
         } = req.body;
 
-        // Validate if student exists
-        const student = await Student.findById(studentId);
-        if (!student) {
-            return res.status(404).json({ message: 'Student not found' });
+        // Required fields check
+        if (!studentId || !courseId || !subjectIds || subjectIds.length === 0 || !installmentType || !numberOfInstallments) {
+            return res.status(400).json({ message: 'All required fields must be provided, including subjects.' });
         }
 
-        // Validate if course exists
+        // Check if student is already added to this course
+        const existingStudent = await CourseStudent.findOne({ studentId, courseId });
+        if (existingStudent) {
+            return res.status(400).json({ message: 'Student already added to this course' });
+        }
+
+        // Fetch course details
         const course = await Course.findById(courseId);
         if (!course) {
             return res.status(404).json({ message: 'Course not found' });
         }
 
-        // Check if student is already enrolled in the course
-        const existingEnrollment = await CourseStudent.findOne({ studentId, courseId });
-        if (existingEnrollment) {
-            return res.status(400).json({ message: 'Student is already enrolled in this course' });
+        // Fetch selected subjects
+        const subjects = await Subject.find({ '_id': { $in: subjectIds } });
+        if (!subjects || subjects.length === 0) {
+            return res.status(400).json({ message: 'Invalid subjects selected' });
         }
 
-        // Create enrollment
-        const newEnrollment = new CourseStudent({
+        // Calculate total fee based on selected subjects
+        const totalSubjectFees = subjects.reduce((total, subject) => total + subject.fee, 0);
+
+        // Generate student roll number for this course
+        const lastStudent = await CourseStudent.find({ courseId }).sort({ studentRollNo: -1 }).limit(1);
+        const studentRollNo = lastStudent.length > 0 ? lastStudent[0].studentRollNo + 1 : 1;
+
+        // Create new course student entry
+        const courseStudent = new CourseStudent({
             studentId,
             studentRollNo,
             courseId,
-            joiningDate,
-            payableFees,
-            totalCourseFees,
+            subjectIds,
+            status,
+            joiningDate: new Date(),
+            payableFees: totalSubjectFees, // Updated logic
+            totalCourseFees: totalSubjectFees,
             discountComment,
-            numberOfInstallments,
             installmentType,
-            createdBy
+            numberOfInstallments,
+            createdBy: req.user?.userId || null,
         });
 
-        await newEnrollment.save();
-        res.status(201).json({ message: 'Student enrolled successfully', enrollment: newEnrollment });
-
+        await courseStudent.save();
+        res.status(201).json({ message: 'Student added to course successfully', courseStudent });
     } catch (error) {
-        console.error('Error enrolling student:', error);
-        res.status(500).json({ message: 'Internal server error', error: error.message });
+        console.error('Error adding student to course:', error);
+        res.status(500).json({ message: 'Error adding student to course', error });
     }
 };
 
-// Get all enrolled students in a course
-exports.getEnrolledStudents = async (req, res) => {
-    try {
-        const { courseId } = req.params;
-        const students = await CourseStudent.find({ courseId })
-            .populate('studentId', 'name email')
-            .populate('courseId', 'courseName')
-            .populate('createdBy', 'name');
-
-        res.status(200).json(students);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching enrolled students', error: error.message });
-    }
-};
-
-// Remove a student from a course
-exports.removeStudent = async (req, res) => {
-    try {
-        const { enrollmentId } = req.params;
-
-        const enrollment = await CourseStudent.findById(enrollmentId);
-        if (!enrollment) {
-            return res.status(404).json({ message: 'Enrollment record not found' });
-        }
-
-        await CourseStudent.findByIdAndDelete(enrollmentId);
-        res.status(200).json({ message: 'Student removed from course successfully' });
-
-    } catch (error) {
-        res.status(500).json({ message: 'Error removing student from course', error: error.message });
-    }
-};
+module.exports={
+    createCourseStudent
+}

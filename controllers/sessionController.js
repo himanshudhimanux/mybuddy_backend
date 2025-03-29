@@ -40,8 +40,6 @@ const createSession = async (req, res) => {
       });
     }
 
-
-
     
     const sessionData = {
       batchClassId: batchClass._id,

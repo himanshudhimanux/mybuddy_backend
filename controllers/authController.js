@@ -6,16 +6,15 @@ const jwt = require("jsonwebtoken");
 
 const userRegsiter = async (req, res) => {
 
-    const { name, email, password, role } = req.body;
+    const { name, email, phoneNumber, password, role } = req.body;
     try {
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ msg: 'User already exists' });
 
-        const newUser = new User({ name, email, password, role });
+        const newUser = new User({ name, email, password, phoneNumber, role });
         await newUser.save();
-
-        const token = generateToken(newUser._id);
-        res.json({ token, msg: 'User Registered Successfully' });
+        
+        res.json({ newUser, msg: 'User Registered Successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -42,7 +41,7 @@ const userLogin = async (req, res) => {
 
 
 
-// Login API (Father Phone)
+// Login API (Father Phone) for Student APp
 const loginWithPhone = async (req, res) => {
     try {
         const { fatherPhone } = req.body;
@@ -68,6 +67,7 @@ const loginWithPhone = async (req, res) => {
     }
 };
 
+// for Student App 
 const verifyOtp = async (req, res) => {
     try {
         const { fatherPhone, otp } = req.body;
@@ -92,7 +92,73 @@ const verifyOtp = async (req, res) => {
 };
 
 
+// ------------- Admin App ---------------
+
+
+// Login API Admin Phone Number
+const adminLoginwithPhone = async (req, res) => {
+    try {
+        const { phoneNumber } = req.body;
+
+        if (!phoneNumber) {
+            return res.status(400).json({ message: "Phone number is required" });
+        }
+
+        // Check if phone number exists in the database
+        const admins = await User.find({ phoneNumber });
+
+        if (!admins.length) {
+            return res.status(404).json({ message: "No admin found for this phone number" });
+        }
+
+        // Generate dummy OTP
+        const otp = "1234"; // For now, it's fixed
+
+        res.status(200).json({ message: "OTP sent successfully", otp }); // In real-world, don't send OTP in response
+    } catch (error) {
+        console.error("Error in adminLoginwithPhone:", error);
+        res.status(500).json({ message: "Server error during login" });
+    }
+};
+
+
+const verifyAdminOtp = async (req, res) => {
+    try {
+        const { phoneNumber, otp } = req.body;
+
+        if (!phoneNumber || !otp) {
+            return res.status(400).json({ message: "Phone number and OTP are required" });
+        }
+
+        // Validate OTP (Here, "1234" is hardcoded for testing. Implement actual OTP verification logic)
+        if (otp !== "1234") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // Find Admin User by phone number
+        const user = await User.findOne({ phoneNumber, role: "admin" });
+
+        if (!user) {
+            return res.status(404).json({ message: "Admin user not found" });
+        }
+
+        // Generate JWT Token with userId and role
+        const token = generateToken(user._id, user.role);
+
+        res.status(200).json({ 
+            message: "OTP verified successfully", 
+            token, 
+            user: { id: user._id, name: user.name, email: user.email, role: user.role }, 
+            role: user.role 
+        });
+
+
+    } catch (error) {
+        console.error("Error in verifyAdminOtp:", error);
+        res.status(500).json({ message: "Server error during OTP verification" });
+    }
+};
 
 
 
-module.exports={userRegsiter, userLogin, loginWithPhone, verifyOtp}
+module.exports={userRegsiter, userLogin, loginWithPhone, verifyOtp , adminLoginwithPhone , verifyAdminOtp}

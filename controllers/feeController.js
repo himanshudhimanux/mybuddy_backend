@@ -2,7 +2,6 @@ const Fee = require("../models/FeeSchema");
 const FeeHistory = require("../models/FeeHistory");
 
 
-
 exports.getStudentActiveFees = async (req, res) => {
   try {
       const { studentId } = req.params;
