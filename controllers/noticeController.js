@@ -1,6 +1,18 @@
 const express = require("express");
 const Notice = require("../models/NoticeModel");
+const multer = require("multer");
 const router = express.Router();
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/"); // Store files in the "uploads" directory
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`); // Add timestamp to the filename
+    },
+});
+const upload = multer({ storage }); // Multer middleware
 
 // Create a new notice
 const createNotice =  async (req, res) => {
@@ -73,5 +85,6 @@ module.exports = {
     singleNotice,
     getAllNotice,
     updateNotice,
-    deleteNotice
+    deleteNotice,
+    upload
 }
