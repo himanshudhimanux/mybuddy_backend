@@ -21,6 +21,7 @@ const feeRoutes = require('./routes/feeRoutes');
 const feeHistoryRoutes = require('./routes/feeHistoryRoutes');
 const razorpayRoutes = require('./routes/razorpayRoutes')
 const courseStudentRoutes = require('./routes/courseStudentRoutes');
+const path = require('path');
 
 
 const app = express();
@@ -29,6 +30,7 @@ const port = process.env.PORT || 5100;
 app.use(cors(corsOptions));  // Apply CORS with the options
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 connectDB();
 

@@ -15,16 +15,20 @@ const storage = multer.diskStorage({
 const upload = multer({ storage }); // Multer middleware
 
 // Create a new notice
-const createNotice =  async (req, res) => {
+const createNotice = async (req, res) => {
     try {
-        const { title, description, notice_img, postedBy } = req.body;
+        const { title, description, postedBy } = req.body;
+        const notice_img = req.file ? req.file.path : null; // get file path from multer
+
         const newNotice = new Notice({ title, description, notice_img, postedBy });
         await newNotice.save();
+
         res.status(201).json({ message: "Notice created successfully", notice: newNotice });
     } catch (error) {
         res.status(500).json({ message: "Error creating notice", error: error.message });
     }
-}
+};
+
 
 // Get all notices
 const getAllNotice =  async (req, res) => {
