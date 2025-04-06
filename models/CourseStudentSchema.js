@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const Fee = require('../models/FeeSchema');
+
 
 const courseStudentSchema = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
@@ -26,6 +28,8 @@ const courseStudentSchema = new mongoose.Schema({
 courseStudentSchema.post("save", async function (doc, next) {
     try {
         const existingFee = await Fee.findOne({ course_student_id: doc._id });
+
+        console.log("exsitingFee")
 
         // if fee exist 
         if (!existingFee) {
