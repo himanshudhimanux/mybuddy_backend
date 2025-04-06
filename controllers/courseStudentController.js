@@ -4,21 +4,23 @@ const Subject = require('../models/Subject');
 
 const createCourseStudent = async (req, res) => {
     try {
+
         const {
             studentId,
             courseId,
             subjectIds,  // Array of selected subjects
-            payableFees,
             discountComment,
             installmentType,
             numberOfInstallments,
             status,
         } = req.body;
 
+
         // Required fields check
         if (!studentId || !courseId || !subjectIds || subjectIds.length === 0 || !installmentType || !numberOfInstallments) {
             return res.status(400).json({ message: 'All required fields must be provided, including subjects.' });
         }
+
 
         // Check if student is already added to this course
         const existingStudent = await CourseStudent.findOne({ studentId, courseId });
@@ -32,14 +34,20 @@ const createCourseStudent = async (req, res) => {
             return res.status(404).json({ message: 'Course not found' });
         }
 
+        console.log("course get ", course)
+
         // Fetch selected subjects
         const subjects = await Subject.find({ '_id': { $in: subjectIds } });
         if (!subjects || subjects.length === 0) {
             return res.status(400).json({ message: 'Invalid subjects selected' });
         }
 
+        console.log("get subjects", subjects)
+
         // Calculate total fee based on selected subjects
-        const totalSubjectFees = subjects.reduce((total, subject) => total + subject.fee, 0);
+        const totalSubjectFees = subjects.reduce((total, subject) => total + subject.subjectFee, 0);
+
+    console.log("total fee", totalSubjectFees)
 
         // Generate student roll number for this course
         const lastStudent = await CourseStudent.find({ courseId }).sort({ studentRollNo: -1 }).limit(1);
@@ -58,8 +66,13 @@ const createCourseStudent = async (req, res) => {
             discountComment,
             installmentType,
             numberOfInstallments,
-            createdBy: req.user?.userId || null,
+            createdBy: req.user.userId || null,
+
         });
+
+        console.log("Decoded user:", req.user);
+
+        console.log("course student add data", courseStudent)
 
         await courseStudent.save();
         res.status(201).json({ message: 'Student added to course successfully', courseStudent });
