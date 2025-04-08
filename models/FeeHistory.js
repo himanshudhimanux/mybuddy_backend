@@ -18,9 +18,13 @@ const FeeHistorySchema = new mongoose.Schema({
     amount_received_by: { type: String, required: function() { return this.mode_of_payment === "Cash"; }},
     create_datetime: { type: Date, default: Date.now },
     update_datetime: { type: Date },
-    created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    updated_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  });
+  },
+
+  {
+    timestamps: true
+  }
+
+);
   
   module.exports = mongoose.model("FeeHistory", FeeHistorySchema);
   

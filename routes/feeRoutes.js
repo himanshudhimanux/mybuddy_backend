@@ -2,13 +2,10 @@ const express = require("express");
 const router = express.Router();
 const feeController = require("../controllers/feeController");
 
-// 🔹 छात्र की फीस डिटेल्स प्राप्त करें
-router.get("/fees/:studentId", feeController.getStudentActiveFees);
+// get student fee details
+router.get("/get_student_fee", feeController.getStudentFeeDetails);
 
-// 🔹 नया भुगतान करें
-router.post("/fees/pay", feeController.processPayment);
-
-// 🔹 छात्र का भुगतान इतिहास देखें
-router.get("/fees/history/:studentId", feeController.getPaymentHistory);
+// new payment add
+router.post("/fees/pay", feeController.submitFee);
 
 module.exports = router;
