@@ -5,40 +5,47 @@ const Fee = require('../models/FeeSchema');
 const FeeHistory = require('../models/FeeHistory');
 
 
-
-
+// @desc    Get student fee details by name or registration number
+// @route   GET /api/fees/get_student_fee?query=somevalue
+// @access  Public
 exports.getStudentFeeDetails = async (req, res) => {
   const query = req.query.query;
 
   try {
-    // search student with naame or registration number
+    // Find student by name or registration number
     const student = await Student.findOne({
       $or: [
         { registrationNumber: query },
-        { name: { $regex: query, $options: 'i' } }
-      ]
+        { name: { $regex: query, $options: 'i' } },
+      ],
     });
 
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (!student)
+      return res.status(404).json({ message: 'Student not found' });
 
-    // find student in course
-    const courseStudent = await CourseStudent.findOne({ studentId: student._id });
+    // Find courseStudent entry
+    const courseStudent = await CourseStudent.findOne({ studentId: student._id })
+      .populate('courseId')
+      .populate('subjectIds');
 
-    if (!courseStudent) return res.status(404).json({ message: "Course not found for student" });
+    if (!courseStudent)
+      return res.status(404).json({ message: 'Course not found for student' });
 
-    // get student fee details
+    // Get fee details
     const fee = await Fee.findOne({ course_student_id: courseStudent._id });
 
-    if (!fee) return res.status(404).json({ message: "No fee found for student" });
+    if (!fee)
+      return res.status(404).json({ message: 'No fee found for student' });
 
     res.json({
       student,
-      courseStudent,
-      fee
+      course: courseStudent.courseId,
+      subjects: courseStudent.subjectIds.map((s) => s.name),
+      fee,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Error fetching student fee details:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -52,7 +59,9 @@ exports.submitFee = async (req, res) => {
     mode_of_payment,
     reference_id,
     transaction_no,
-    amount_received_by
+    amount_received_by,
+    comment,
+    date
   } = req.body;
 
   try {
@@ -67,12 +76,14 @@ exports.submitFee = async (req, res) => {
       reference_id,
       status: "Paid",
       transaction_no,
-      amount_received_by
+      amount_received_by,
+      comment,
+      date,
     });
 
     await history.save();
 
-    // update fee
+    // Update fee record
     fee.amount_paid += amount;
     fee.amount_pending = fee.amount_to_be_paid - fee.amount_paid;
 
@@ -93,3 +104,4 @@ exports.submitFee = async (req, res) => {
     res.status(500).json({ message: "Fee submit failed" });
   }
 };
+
