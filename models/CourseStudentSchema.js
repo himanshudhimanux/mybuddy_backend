@@ -6,6 +6,12 @@ const courseStudentSchema = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
     studentRollNo: { type: Number, required: true },
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+    subjectIds: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Subject",
+        }
+      ],
     joiningDate: { type: Date, required: true },
     payableFees: { type: Number, required: true },
     totalCourseFees: { type: String },

@@ -82,6 +82,31 @@ const createCourseStudent = async (req, res) => {
     }
 };
 
+// get course details of student
+
+const getStudentCourseDetails = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+
+        const courseDetails = await CourseStudent.find({ studentId })
+            .populate('courseId', 'name duration') // populate course name and duration
+            .populate('subjectIds', 'name') // populate subject names
+            .populate('studentId', 'name registrationNumber') // populate basic student info
+            .populate('createdBy', 'name'); // populate user who created it
+
+        if (!courseDetails || courseDetails.length === 0) {
+            return res.status(404).json({ message: "No course found for this student." });
+        }
+
+        res.status(200).json(courseDetails);
+    } catch (error) {
+        console.error("Error fetching course details:", error);
+        res.status(500).json({ message: "Internal server error." });
+    }
+};
+
+
 module.exports={
-    createCourseStudent
+    createCourseStudent,
+    getStudentCourseDetails
 }

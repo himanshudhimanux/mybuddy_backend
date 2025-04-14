@@ -5,47 +5,53 @@ const Fee = require('../models/FeeSchema');
 const FeeHistory = require('../models/FeeHistory');
 
 
-// @desc    Get student fee details by name or registration number
-// @route   GET /api/fees/get_student_fee?query=somevalue
-// @access  Public
 exports.getStudentFeeDetails = async (req, res) => {
-  const query = req.query.query;
-
   try {
-    // Find student by name or registration number
+    const query = req.query.query?.trim();
+
+    if (!query) {
+      return res.status(400).json({ message: "Missing query parameter" });
+    }
+
+    // Try to find the student by reg number or name
     const student = await Student.findOne({
       $or: [
         { registrationNumber: query },
-        { name: { $regex: query, $options: 'i' } },
+        { name: { $regex: new RegExp(query, "i") } },
       ],
     });
 
-    if (!student)
-      return res.status(404).json({ message: 'Student not found' });
+    console.log("student found", student)
 
-    // Find courseStudent entry
-    const courseStudent = await CourseStudent.findOne({ studentId: student._id })
-      .populate('courseId')
-      .populate('subjectIds');
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
 
-    if (!courseStudent)
-      return res.status(404).json({ message: 'Course not found for student' });
+    // Now find course-student entry
+    const courseStudent = await CourseStudent.findOne({
+      studentId: student._id,
+    }).populate("courseId");
 
-    // Get fee details
-    const fee = await Fee.findOne({ course_student_id: courseStudent._id });
+    console.log("student course in found", courseStudent)
 
-    if (!fee)
-      return res.status(404).json({ message: 'No fee found for student' });
+    if (!courseStudent) {
+      return res.status(404).json({ message: "Course data not found for student" });
+    }
 
-    res.json({
+    // Get the fee details
+    const fee = await Fee.find({ course_student_id: courseStudent._id });
+
+    console.log("student fee found", fee)
+
+    return res.status(200).json({
       student,
-      course: courseStudent.courseId,
-      subjects: courseStudent.subjectIds.map((s) => s.name),
+      courseStudent,
       fee,
     });
-  } catch (error) {
-    console.error('Error fetching student fee details:', error);
-    res.status(500).json({ message: 'Server Error' });
+
+  } catch (err) {
+    console.error("Error in getStudentFeeDetails:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
