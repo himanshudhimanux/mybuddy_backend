@@ -70,6 +70,8 @@ const createSession = async (req, res) => {
 
 // Generate Sessions Utility
 const generateSessions = (data) => {
+
+  
   const { sessionType, scheduleDetails } = data;
   const { startDate, endDate, startTime, endTime, weeklyDays, repeatEvery, onDay, onThe } = scheduleDetails;
 

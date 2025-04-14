@@ -1,22 +1,60 @@
-const { default: mongoose } = require("mongoose");
+// models/TestSchedule.js
+const mongoose = require('mongoose');
 
-const TestScheduleSchema = new mongoose.Schema({
-    test_date: { type: Date, required: true },
-    test_type_id: { type: mongoose.Schema.Types.ObjectId, ref: "TestType", required: true },
-    batch_id: { type: mongoose.Schema.Types.ObjectId, ref: "Batch", required: true },
-    subject_id: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
-    syllabus: { type: String },
-    comment: { type: String },
-    start_time: { type: String, required: true },
-    end_time: { type: String, required: true },
-    status: { type: String, enum: ["Active", "Cancelled", "Inactive"], required: true },
-    max_marks: { type: Number, required: true },
-    min_marks: { type: Number, required: true },
-    create_datetime: { type: Date, default: Date.now },
-    update_datetime: { type: Date },
-    created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    updated_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  });
-  
-  module.exports = mongoose.model("TestSchedule", TestScheduleSchema);
-  
+const testScheduleSchema = new mongoose.Schema({
+  testDate: {
+    type: Date,
+    required: true,
+  },
+  testTypeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TestType',
+    required: true,
+  },
+  batchId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BatchClass',
+    required: true,
+  },
+  subjectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: true,
+  },
+  syllabus: {
+    type: String,
+  },
+  comment: {
+    type: String,
+  },
+  scheduleDetails: {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
+    weeklyDays: [String], // Only for Weekly
+    repeatEvery: { type: Number }, // For Weekly/Monthly
+    onDay: { type: Number }, // For Monthly
+    onThe: { type: String }, // For Monthly (e.g., 'First', 'Second')
+  },
+  sessionType: {
+    type: String,
+    enum: ['Single', 'Every Day', 'Weekly', 'Monthly'],
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Cancelled', 'Inactive'],
+    default: 'Active',
+  },
+  maxMarks: Number,
+  minMarks: Number,
+
+},
+{
+  timestamps: true
+}
+
+);
+
+module.exports = mongoose.model('TestSchedule', testScheduleSchema);

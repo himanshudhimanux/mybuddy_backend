@@ -1,12 +1,28 @@
-const { default: mongoose } = require("mongoose");
+// models/TestType.js
+const mongoose = require('mongoose');
 
-const TestTypeSchema = new mongoose.Schema({
-    test_type: { type: String, required: true, unique: true },
-    create_datetime: { type: Date, default: Date.now },
-    update_datetime: { type: Date },
-    created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    updated_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  });
-  
-  module.exports = mongoose.model("TestType", TestTypeSchema);
-  
+const testTypeSchema = new mongoose.Schema({
+  testType: {
+    type: String,
+    enum: ['Weekly Test', 'Monthly Test', 'Revision Test', 'Surprise Test'],
+    required: true,
+  },
+  createdDateTime: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedDateTime: {
+    type: Date,
+    default: Date.now,
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+});
+
+module.exports = mongoose.model('TestType', testTypeSchema);
