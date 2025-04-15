@@ -8,6 +8,7 @@ const {
   updateTestSchedule,
   deleteTestSchedule,
   getUpcomingTests,
+  getPastTests,
 } = require('../controllers/testScheduleController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
@@ -24,6 +25,10 @@ router.get('/get-test-schedules', verifyToken,  getAllTestSchedules);
 router.get('/single-test-schedule/:id', verifyToken, getTestScheduleById);
 
 router.get('/upcoming-tests', verifyToken, getUpcomingTests)
+
+
+router.get('/test/past', verifyToken, getPastTests)
+
 
 // Update a TestSchedule by ID
 router.put('/update-test-schedule/:id', verifyToken, updateTestSchedule);

@@ -294,3 +294,54 @@ exports.getUpcomingTests = async (req, res) => {
   }
 };
 
+
+exports.getPastTests = async (req, res) => {
+  try {
+    const { batchId, startDate, endDate } = req.query;
+
+    if (!batchId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Batch ID is required to fetch past tests',
+      });
+    }
+
+    const start = startDate
+      ? moment(startDate).utc().startOf('day')
+      : moment('2000-01-01').utc(); // Earliest possible date
+
+    const end = endDate
+      ? moment(endDate).utc().endOf('day')
+      : moment().utc().subtract(1, 'day').endOf('day'); // Until yesterday
+
+    const tests = await TestSchedule.find({
+      batchId: new mongoose.Types.ObjectId(batchId),
+      testDate: {
+        $gte: start.toDate(),
+        $lte: end.toDate(),
+      },
+      status: 'Active',
+    }).populate('batchId testTypeId subjectId');
+
+    if (!tests.length) {
+      return res.status(200).json({
+        success: false,
+        message: 'No past tests found for this batch.',
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Past tests fetched successfully',
+      data: tests,
+    });
+
+  } catch (error) {
+    console.error('Error fetching past tests:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching past tests',
+    });
+  }
+};
