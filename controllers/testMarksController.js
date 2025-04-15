@@ -28,8 +28,39 @@ exports.getMarksByStudentId = async (req, res) => {
       .populate("test_id")
       .populate("student_id");
 
-    res.status(200).json({ success: true, data: marks });
+    if (!marks || marks.length === 0) {
+      return res.status(200).json({ success: false, message: "No marks found for this student" });
+    }
+
+    return res.status(200).json({ success: true, data: marks });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error fetching marks", error: error.message });
+    console.error("Error fetching marks:", error);
+    return res.status(500).json({ success: false, message: "Error fetching marks", error: error.message });
   }
 };
+
+
+
+// Get marks by student ID and test ID
+exports.getMarksByStudentAndTestId = async (req, res) => {
+  try {
+    const { studentId, testId } = req.params;
+
+    const marks = await TestMarks.findOne({
+      student_id: studentId,
+      test_id: testId
+    })
+    .populate("test_id")
+    .populate("student_id");
+
+    if (!marks) {
+      return res.status(200).json({ success: false, message: "No marks found for this test and student" });
+    }
+
+    return res.status(200).json({ success: true, data: marks });
+  } catch (error) {
+    console.error("Error fetching marks:", error);
+    return res.status(500).json({ success: false, message: "Error fetching marks", error: error.message });
+  }
+};
+
