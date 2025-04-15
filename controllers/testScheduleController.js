@@ -241,3 +241,56 @@ exports.getUpcomingTests = async (req, res) => {
   }
 };
 
+
+exports.getUpcomingTests = async (req, res) => {
+  try {
+    const { batchId, startDate, endDate } = req.query;
+
+    // Date setup
+    const start = startDate
+      ? moment(startDate).utc().startOf('day')
+      : moment().utc().startOf('day');
+
+    const end = endDate
+      ? moment(endDate).utc().endOf('day')
+      : moment().utc().add(7, 'days').endOf('day');
+
+    // Query setup
+    const query = {
+      testDate: {
+        $gte: start.toDate(),
+        $lte: end.toDate(),
+      },
+      status: 'Active',
+    };
+
+    if (batchId) {
+      query.batchId = new mongoose.Types.ObjectId(batchId);
+    }
+
+    const tests = await TestSchedule.find(query)
+      .populate('batchId testTypeId subjectId');
+
+    if (!tests.length) {
+      return res.status(200).json({
+        success: false,
+        message: 'No upcoming tests found in the selected duration.',
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Upcoming tests fetched successfully',
+      data: tests,
+    });
+
+  } catch (error) {
+    console.error("Error fetching upcoming tests:", error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching upcoming tests',
+    });
+  }
+};
+

@@ -9,27 +9,28 @@ const {
   deleteTestSchedule,
   getUpcomingTests,
 } = require('../controllers/testScheduleController');
+const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
 
 // Create a new TestSchedule
-router.post('/create-test-schedule', createTestSchedule);
+router.post('/create-test-schedule', verifyToken, createTestSchedule);
 
 
 // Get all TestSchedules
-router.get('/get-test-schedules', getAllTestSchedules);
+router.get('/get-test-schedules', verifyToken,  getAllTestSchedules);
 
 
 // Get a specific TestSchedule by ID
-router.get('/single-test-schedule/:id', getTestScheduleById);
+router.get('/single-test-schedule/:id', verifyToken, getTestScheduleById);
 
-router.get('/upcoming-tests', getUpcomingTests)
+router.get('/upcoming-tests', verifyToken, getUpcomingTests)
 
 // Update a TestSchedule by ID
-router.put('/update-test-schedule/:id', updateTestSchedule);
+router.put('/update-test-schedule/:id', verifyToken, updateTestSchedule);
 
 
 // Delete a TestSchedule by ID
-router.delete('/delete-schedule:id', deleteTestSchedule);
+router.delete('/delete-schedule:id', verifyToken, deleteTestSchedule);
 
 
 
