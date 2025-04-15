@@ -22,6 +22,7 @@ const razorpayRoutes = require('./routes/razorpayRoutes');
 const courseStudentRoutes = require('./routes/courseStudentRoutes');
 const testTypesRoutes = require("./routes/testTypesRoutes");
 const testScheduleRoutes = require("./routes/testScheduleRoutes");
+const testMarksRoutes = require("./routes/testMarksRoutes")
 
 const path = require('path');
 
@@ -62,6 +63,7 @@ app.use("/api", razorpayRoutes);
 app.use("/api", courseStudentRoutes)
 app.use("/api", testTypesRoutes);
 app.use("/api", testScheduleRoutes)
+app.use("/api", testMarksRoutes);
 
 
 // ========= Routes end=============
