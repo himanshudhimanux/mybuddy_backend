@@ -43,6 +43,11 @@ app.get('/', (req, res) => {
 
 // ========= Routes=============
 
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  next();
+});
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api', studentRoutes);

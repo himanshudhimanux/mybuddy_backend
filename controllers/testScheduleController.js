@@ -147,16 +147,22 @@ exports.getAllTestSchedules = async (req, res) => {
 // Get TestSchedule by ID
 exports.getTestScheduleById = async (req, res) => {
   try {
+
     const testSchedule = await TestSchedule.findById(req.params.id).populate('testTypeId');
+
+
     if (!testSchedule) {
-      return res.status(404).json({ success: false, message: 'Test Schedule not found' });
+      return res.status(200).json({ success: false, message: 'Test Schedule not found' }); // ✅ status 200 with success: false
     }
-    res.status(200).json({ success: true, data: testSchedule });
+
+    return res.status(200).json({ success: true, data: testSchedule });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Error fetching test schedule' });
+    console.error("Error fetching test schedule:", err);
+    return res.status(500).json({ success: false, message: 'Error fetching test schedule' });
   }
 };
+
+
 
 // Update TestSchedule
 exports.updateTestSchedule = async (req, res) => {
@@ -199,47 +205,47 @@ exports.deleteTestSchedule = async (req, res) => {
 
 
 
-exports.getUpcomingTests = async (req, res) => {
-  try {
-    const { batchId, subjectId } = req.query;
+// exports.getUpcomingTests = async (req, res) => {
+//   try {
+//     const { batchId, subjectId } = req.query;
 
-    if (!batchId || !subjectId) {
-      return res.status(400).json({ message: "Batch ID and Subject ID are required" });
-    }
+//     if (!batchId || !subjectId) {
+//       return res.status(400).json({ message: "Batch ID and Subject ID are required" });
+//     }
 
-    const batchObjectId = new mongoose.Types.ObjectId(batchId);
-    const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
+//     const batchObjectId = new mongoose.Types.ObjectId(batchId);
+//     const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
 
-    const currentDate = moment().utc().startOf('day');
-    const fiveDaysLater = moment().utc().add(5, 'days').endOf('day');
+//     const currentDate = moment().utc().startOf('day');
+//     const fiveDaysLater = moment().utc().add(5, 'days').endOf('day');
 
-    console.log("Looking for tests between", currentDate.toISOString(), "and", fiveDaysLater.toISOString());
+//     console.log("Looking for tests between", currentDate.toISOString(), "and", fiveDaysLater.toISOString());
 
-    const allTests = await TestSchedule.find({});
-    console.log("All test entries for debugging:", allTests);
+//     const allTests = await TestSchedule.find({});
+//     console.log("All test entries for debugging:", allTests);
 
-    const tests = await TestSchedule.find({
-      batchId: batchObjectId,
-      subjectId: subjectObjectId,
-      testDate: {
-        $gte: currentDate.toDate(),
-        $lte: fiveDaysLater.toDate(),
-      },
-      status: "Active",
-    }).populate("batchId subjectId testTypeId");
+//     const tests = await TestSchedule.find({
+//       batchId: batchObjectId,
+//       subjectId: subjectObjectId,
+//       testDate: {
+//         $gte: currentDate.toDate(),
+//         $lte: fiveDaysLater.toDate(),
+//       },
+//       status: "Active",
+//     }).populate("batchId subjectId testTypeId");
 
-    console.log("Matching tests:", tests);
+//     console.log("Matching tests:", tests);
 
-    if (!tests.length) {
-      return res.status(404).json({ message: "No upcoming tests found for this batch and subject" });
-    }
+//     if (!tests.length) {
+//       return res.status(404).json({ message: "No upcoming tests found for this batch and subject" });
+//     }
 
-    return res.status(200).json(tests);
-  } catch (error) {
-    console.error("Error fetching upcoming tests:", error);
-    return res.status(500).json({ message: "Error fetching upcoming tests" });
-  }
-};
+//     return res.status(200).json(tests);
+//   } catch (error) {
+//     console.error("Error fetching upcoming tests:", error);
+//     return res.status(500).json({ message: "Error fetching upcoming tests" });
+//   }
+// };
 
 
 exports.getUpcomingTests = async (req, res) => {

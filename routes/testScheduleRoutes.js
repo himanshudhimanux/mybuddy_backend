@@ -21,8 +21,10 @@ router.post('/create-test-schedule', verifyToken, createTestSchedule);
 router.get('/get-test-schedules', verifyToken,  getAllTestSchedules);
 
 
+
 // Get a specific TestSchedule by ID
-router.get('/single-test-schedule/:id', verifyToken, getTestScheduleById);
+router.get('/single-test/:id', verifyToken, getTestScheduleById);
+
 
 router.get('/upcoming-tests', verifyToken, getUpcomingTests)
 
