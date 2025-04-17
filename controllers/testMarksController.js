@@ -1,5 +1,6 @@
 const TestMarks = require("../models/TestMarks");
 
+
 // Create test marks
 exports.createTestMarks = async (req, res) => {
   try {
@@ -18,6 +19,7 @@ exports.createTestMarks = async (req, res) => {
     res.status(500).json({ success: false, message: "Error creating test mark", error: error.message });
   }
 };
+
 
 // Get test marks by student ID
 exports.getMarksByStudentId = async (req, res) => {
@@ -38,7 +40,6 @@ exports.getMarksByStudentId = async (req, res) => {
     return res.status(500).json({ success: false, message: "Error fetching marks", error: error.message });
   }
 };
-
 
 
 // Get marks by student ID and test ID
