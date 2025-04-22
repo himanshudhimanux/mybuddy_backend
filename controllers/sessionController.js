@@ -116,9 +116,6 @@ const generateSessions = (data) => {
   return sessions;
 };
 
-
-
-
 // Get all sessions with search, pagination, and filtering
 const getSessions = async (req, res) => {
   try {
@@ -235,7 +232,6 @@ const getSessionsByType = async (req, res) => {
   }
 };
 
-
 const getStudentSessionsAndAttendance = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -316,8 +312,6 @@ const getStudentSessionsAndAttendance = async (req, res) => {
   }
 };
 
-
-
 const getUpcomingSessions = async (req, res) => {
   try {
 
@@ -347,6 +341,27 @@ const getUpcomingSessions = async (req, res) => {
 };
 
 
+const getDateSessions = async (req, res) => {
+  try {
+    const { date, courseId } = req.query;
+
+    console.log("date session", date)
+    console.log("courseId", courseId)
+
+    if (!date || !courseId) {
+      return res.status(400).json({ error: 'Date and Course ID are required' });
+    }
+
+    const sessions = await Session.find({
+      batchDate: new Date(date),
+      courseId,
+    }).populate('batchId');
+
+    res.status(200).json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 
 module.exports = {
@@ -357,5 +372,6 @@ module.exports = {
   deleteSession,
   getSessionsByType,
   getStudentSessionsAndAttendance,
-  getUpcomingSessions
+  getUpcomingSessions,
+  getDateSessions
 };

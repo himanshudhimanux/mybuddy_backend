@@ -56,7 +56,6 @@ exports.getStudentFeeDetails = async (req, res) => {
 };
 
 
-
 exports.getFeeDetailsByStudentId = async (req, res) => {
   
   const { studentId } = req.params;

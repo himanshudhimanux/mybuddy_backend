@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createSession, getSessions, getSessionById, updateSession, deleteSession, getSessionsByType, getStudentSessionsAndAttendance, getUpcomingSessions } = require('../controllers/sessionController');
+const { createSession, getSessions, getSessionById, updateSession, deleteSession, getSessionsByType, getStudentSessionsAndAttendance, getUpcomingSessions, getDateSessions } = require('../controllers/sessionController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
 // Create session
@@ -15,5 +15,7 @@ router.get("/sessions/type/:type", verifyToken, roleCheck('admin'), getSessionsB
 router.get('/sessions-attendance/:id', verifyToken, getStudentSessionsAndAttendance);
 
 router.get("/upcoming-classess", verifyToken,  getUpcomingSessions);
+
+router.get("/get/sessions", getDateSessions)
 
 module.exports = router;

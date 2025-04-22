@@ -95,15 +95,28 @@ const getStudentCourseDetails = async (req, res) => {
             .populate('createdBy', 'name'); // populate user who created it
 
         if (!courseDetails || courseDetails.length === 0) {
-            return res.status(404).json({ message: "No course found for this student." });
+            return res.status(200).json({
+                success: false,
+                message: "No course found for this student.",
+                data: []
+            });
         }
 
-        res.status(200).json(courseDetails);
+        return res.status(200).json({
+            success: true,
+            message: "Course details fetched successfully.",
+            data: courseDetails
+        });
     } catch (error) {
         console.error("Error fetching course details:", error);
-        res.status(500).json({ message: "Internal server error." });
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            error: error.message
+        });
     }
 };
+
 
 
 module.exports={
