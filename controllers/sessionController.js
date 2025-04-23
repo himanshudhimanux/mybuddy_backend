@@ -232,41 +232,48 @@ const getSessionsByType = async (req, res) => {
   }
 };
 
+
 const getStudentSessionsAndAttendance = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // Step 1: Student ka batch aur uske subjects find karna
+    // Step 1: Student का batch और subjects ढूंढना
     const studentBatch = await Batch.findOne({ studentsEnrolled: studentId }).populate('subjects');
 
     if (!studentBatch) {
       return res.status(404).json({ success: false, message: "Student batch not found" });
     }
 
-    const batchId = studentBatch._id; // Student ka batch ID
-    const studentSubjectIds = studentBatch.subjects.map(subject => subject._id); // Student ke subjects
+    const batchId = studentBatch._id;
+    const studentSubjectIds = studentBatch.subjects.map(subject => subject._id);
 
-    // Step 2: Sirf wahi sessions fetch karna jo student ke batch aur subjects se match karein
+    // Step 2: Batch और subjects के sessions ढूंढना
     const sessions = await Session.find({
-      batchClassId: batchId, 
-      subjectId: { $in: studentSubjectIds } // Sirf student ke subjects ke sessions fetch karna
+      batchClassId: batchId,
+      subjectId: { $in: studentSubjectIds }
     })
-      .populate('batchClassId', 'name') 
-      .populate('subjectId', 'name') 
-      .populate('teacherId', 'name') 
-      .populate('scheduleDetails') 
+      .populate('batchClassId', 'name')
+      .populate('subjectId', 'name')
+      .populate('teacherId', 'name')
+      .populate('scheduleDetails')
       .sort({ batchDate: 1 });
 
-    // Extract session IDs
+    if (!sessions || sessions.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No sessions available for the selected student"
+      });
+    }
+
     const sessionIds = sessions.map(session => session._id);
 
-    // Step 3: Student ki attendance fetch karna
+    // Step 3: Student की attendance निकालना
     const attendanceRecords = await Attendance.find({
       studentId,
       sessionId: { $in: sessionIds }
     });
 
-    // Step 4: Sessions ke sath attendance map karna
+    // Step 4: Session और attendance को map करना
     const sessionData = sessions.map(session => {
       const attendance = attendanceRecords.find(att => att.sessionId.toString() === session._id.toString());
 
@@ -301,16 +308,23 @@ const getStudentSessionsAndAttendance = async (req, res) => {
       };
     });
 
-    res.status(200).json({
+    // Final Response
+    return res.status(200).json({
       success: true,
+      message: "Sessions and attendance fetched successfully",
       data: sessionData
     });
 
   } catch (error) {
     console.error("Error fetching student sessions and attendance:", error);
-    res.status(500).json({ success: false, message: "Error fetching data" });
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching data"
+    });
   }
 };
+
+
 
 const getUpcomingSessions = async (req, res) => {
   try {
