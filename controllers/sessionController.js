@@ -3,6 +3,7 @@ const BatchClass = require('../models/BatchClass');
 const Teacher = require('../models/Teacher');
 const Subject = require('../models/Subject');
 const Attendance = require('../models/AttendanceSchema')
+const Batch = require("../models/BatchSchema")
 
 // Create Session Handler
 const createSession = async (req, res) => {

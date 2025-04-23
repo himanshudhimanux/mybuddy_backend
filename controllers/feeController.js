@@ -57,7 +57,6 @@ exports.getStudentFeeDetails = async (req, res) => {
 
 
 exports.getFeeDetailsByStudentId = async (req, res) => {
-  
   const { studentId } = req.params;
 
   try {
@@ -71,21 +70,26 @@ exports.getFeeDetailsByStudentId = async (req, res) => {
       return res.status(200).json({
         success: false,
         message: "No fee records found for this student.",
+        data: []
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: feeDetails,
+      message: "Fee details fetched successfully.",
+      data: feeDetails
     });
+
   } catch (error) {
     console.error("Error fetching fee details:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error while fetching fee details.",
+      data: null
     });
   }
 };
+
 
 
 
