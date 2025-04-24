@@ -8,7 +8,7 @@ const Batch = require("../models/BatchSchema")
 // Create Session Handler
 const createSession = async (req, res) => {
   try {
-    
+
     const {
       batchClassId,
       batchDate,
@@ -27,7 +27,7 @@ const createSession = async (req, res) => {
     const batchClass = await BatchClass.findOne({ _id: batchClassId });
     const teacher = await Teacher.findOne({ _id: teacherId });
     const subject = await Subject.findOne({ _id: subjectId });
-    
+
     console.log("Batch Class ID", batchClass);
     console.log("Teacher", teacher)
     console.log("subject", teacher)
@@ -41,7 +41,7 @@ const createSession = async (req, res) => {
       });
     }
 
-    
+
     const sessionData = {
       batchClassId: batchClass._id,
       batchDate,
@@ -72,7 +72,7 @@ const createSession = async (req, res) => {
 // Generate Sessions Utility
 const generateSessions = (data) => {
 
-  
+
   const { sessionType, scheduleDetails } = data;
   const { startDate, endDate, startTime, endTime, weeklyDays, repeatEvery, onDay, onThe } = scheduleDetails;
 
@@ -234,124 +234,212 @@ const getSessionsByType = async (req, res) => {
 };
 
 
-const getStudentSessionsAndAttendance = async (req, res) => {
+const getSessionsWithAttendance = async (req, res) => {
   try {
-    const { studentId } = req.params;
+    const { studentId, date } = req.query;
 
-    // Step 1: Student का batch और subjects ढूंढना
-    const studentBatch = await Batch.findOne({ studentsEnrolled: studentId }).populate('subjects');
-
+    // Step 1: Get batchId of the student
+    const studentBatch = await Batch.findOne({ studentId });
     if (!studentBatch) {
       return res.status(404).json({ success: false, message: "Student batch not found" });
     }
+    const batchId = studentBatch.batchId;
 
-    const batchId = studentBatch._id;
-    const studentSubjectIds = studentBatch.subjects.map(subject => subject._id);
+    // Step 2: Build session query using batchId
+    let sessionQuery = {
+      batchClassId: batchId
+    };
 
-    // Step 2: Batch और subjects के sessions ढूंढना
-    const sessions = await Session.find({
-      batchClassId: batchId,
-      subjectId: { $in: studentSubjectIds }
-    })
-      .populate('batchClassId', 'name')
-      .populate('subjectId', 'name')
-      .populate('teacherId', 'name')
-      .populate('scheduleDetails')
-      .sort({ batchDate: 1 });
-
-    if (!sessions || sessions.length === 0) {
-      return res.status(200).json({
-        success: false,
-        message: "No sessions available for the selected student"
-      });
+    // Step 3: Filter by date if provided
+    if (date) {
+      const parsedDate = new Date(date);
+      sessionQuery.batchDate = {
+        $gte: new Date(parsedDate.setHours(0, 0, 0, 0)),
+        $lte: new Date(parsedDate.setHours(23, 59, 59, 999))
+      };
     }
 
-    const sessionIds = sessions.map(session => session._id);
+    // Step 4: Fetch sessions for this batch
+    const sessions = await Session.find(sessionQuery).lean();
 
-    // Step 3: Student की attendance निकालना
-    const attendanceRecords = await Attendance.find({
-      studentId,
-      sessionId: { $in: sessionIds }
-    });
+    // Step 5: Add attendance for each session
+    const sessionsWithAttendance = await Promise.all(
+      sessions.map(async (session) => {
+        const attendance = await Attendance.findOne({
+          sessionId: session._id,
+          studentId: studentId,
+        }).lean();
+        return {
+          ...session,
+          attendance,
+        };
+      })
+    );
 
-    // Step 4: Session और attendance को map करना
-    const sessionData = sessions.map(session => {
-      const attendance = attendanceRecords.find(att => att.sessionId.toString() === session._id.toString());
-
-      return {
-        sessionId: session._id,
-        batchDate: session.batchDate,
-        subject: session.subjectId.name,
-        teacher: session.teacherId.name,
-        batchClass: session.batchClassId.name,
-        classType: session.classType,
-        sessionMode: session.sessionMode,
-        sessionType: session.sessionType,
-        status: session.status,
-        scheduleDetails: session.scheduleDetails ? {
-          startDate: session.scheduleDetails.startDate,
-          endDate: session.scheduleDetails.endDate,
-          startTime: session.scheduleDetails.startTime,
-          endTime: session.scheduleDetails.endTime,
-          weeklyDays: session.scheduleDetails.weeklyDays || [],
-          repeatEvery: session.scheduleDetails.repeatEvery,
-          onDay: session.scheduleDetails.onDay,
-          onThe: session.scheduleDetails.onThe
-        } : null,
-        attended: !!attendance,
-        attendanceDetails: attendance ? {
-          attendanceDate: attendance.attendanceDate,
-          attendanceTime: attendance.attendanceTime,
-          attendanceSource: attendance.attendanceSource,
-          attendanceType: attendance.attendanceType,
-          notificationSent: attendance.notificationSent || []
-        } : null
-      };
-    });
-
-    // Final Response
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "Sessions and attendance fetched successfully",
-      data: sessionData
+      sessions: sessionsWithAttendance,
     });
 
   } catch (error) {
-    console.error("Error fetching student sessions and attendance:", error);
-    return res.status(500).json({
+    console.error("Error fetching sessions with attendance:", error);
+    res.status(500).json({
       success: false,
-      message: "Something went wrong while fetching data"
+      message: "Error fetching sessions with attendance",
     });
   }
 };
 
 
 
+
+// const getStudentSessionsAndAttendance = async (req, res) => {
+//   try {
+
+//     const { studentId } = req.params;
+//     const { date } = req.query;  // ✅ सही किया नाम
+
+//     console.log("studentId", studentId)
+//     console.log("date", date)  // ✅ अब यह undefined नहीं होगा
+
+//     let sessionQuery = {
+//       "students": studentId
+//     };
+
+//     if (date) {
+//       const parsedDate = new Date(date);
+
+//       console.log("parsedDate", parsedDate)
+
+//       sessionQuery.batchDate = {
+//         $gte: new Date(parsedDate.setHours(0, 0, 0, 0)),
+//         $lte: new Date(parsedDate.setHours(23, 59, 59, 999))
+//       };
+
+//       console.log("sessionQuery.batchDate", sessionQuery.batchDate)
+
+//     }
+
+
+//     // Step 2: Sessions fetch karo
+//     const sessions = await Session.find(sessionQuery)
+//       .populate('batchClassId', 'name')
+//       .populate('subjectId', 'name')
+//       .populate('teacherId', 'name')
+//       .populate('scheduleDetails')
+//       .sort({ batchDate: 1 });
+
+//     console.log("sessions", sessions)
+
+//     if (!sessions || sessions.length === 0) {
+//       return res.status(200).json({
+//         success: false,
+//         message: "No sessions available for the selected student"
+//       });
+//     }
+
+//     const sessionIds = sessions.map(session => session._id);
+
+//     console.log("sessionIds", sessionIds)
+
+//     // Step 3: Attendance get
+//     const attendanceRecords = await Attendance.find({
+//       studentId,
+//       sessionId: { $in: sessionIds }
+//     });
+
+//     console.log("attendanceRecords", attendanceRecords)
+
+//     // Step 4: Response structure create
+//     const sessionData = sessions.map(session => {
+//       const attendance = attendanceRecords.find(
+//         att => att.sessionId.toString() === session._id.toString()
+//       );
+
+//       console.log("sessionData", sessionData)
+
+//       return {
+//         sessionId: session._id,
+//         batchDate: session.batchDate,
+//         subject: {
+//           _id: session.subjectId?._id,
+//           name: session.subjectId?.name
+//         },
+//         teacher: {
+//           _id: session.teacherId?._id,
+//           name: session.teacherId?.name
+//         },
+//         batchClass: {
+//           _id: session.batchClassId?._id,
+//           name: session.batchClassId?.name
+//         },
+//         classType: session.classType,
+//         sessionMode: session.sessionMode,
+//         sessionType: session.sessionType,
+//         status: session.status,
+//         scheduleDetails: session.scheduleDetails ? {
+//           startDate: session.scheduleDetails.startDate,
+//           endDate: session.scheduleDetails.endDate,
+//           startTime: session.scheduleDetails.startTime,
+//           endTime: session.scheduleDetails.endTime,
+//           weeklyDays: session.scheduleDetails.weeklyDays || [],
+//           repeatEvery: session.scheduleDetails.repeatEvery,
+//           onDay: session.scheduleDetails.onDay,
+//           onThe: session.scheduleDetails.onThe
+//         } : null,
+//         attended: !!attendance,
+//         attendanceDetails: attendance ? {
+//           attendanceDate: attendance.attendanceDate,
+//           attendanceTime: attendance.attendanceTime,
+//           attendanceSource: attendance.attendanceSource,
+//           attendanceType: attendance.attendanceType,
+//           notificationSent: attendance.notificationSent || []
+//         } : null
+//       };
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Sessions and attendance fetched successfully",
+//       data: sessionData
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching student sessions and attendance:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching data"
+//     });
+//   }
+// };
+
+
+
 const getUpcomingSessions = async (req, res) => {
   try {
 
-      const { startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
 
-      if (!startDate || !endDate) {
-          return res.status(400).json({ success: false, message: "startDate and endDate are required" });
-      }
+    if (!startDate || !endDate) {
+      return res.status(400).json({ success: false, message: "startDate and endDate are required" });
+    }
 
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Ensure full day is covered
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Ensure full day is covered
 
-      const upcomingSessions = await Session.find({
-          batchDate: { $gte: start, $lte: end }
-      }).sort({ batchDate: 1 })      .populate("subjectId", "name") // Get only the subject name
+    const upcomingSessions = await Session.find({
+      batchDate: { $gte: start, $lte: end }
+    }).sort({ batchDate: 1 }).populate("subjectId", "name") // Get only the subject name
       .populate("teacherId", "name"); // Get only the teacher name;
 
 
 
-      res.status(200).json({ success: true, data: upcomingSessions });
+    res.status(200).json({ success: true, data: upcomingSessions });
   } catch (error) {
-      console.error('Error fetching upcoming sessions:', error);
-      res.status(500).json({ success: false, message: 'Error fetching upcoming sessions' });
+    console.error('Error fetching upcoming sessions:', error);
+    res.status(500).json({ success: false, message: 'Error fetching upcoming sessions' });
   }
 };
 
@@ -386,7 +474,8 @@ module.exports = {
   updateSession,
   deleteSession,
   getSessionsByType,
-  getStudentSessionsAndAttendance,
+  // getStudentSessionsAndAttendance,
   getUpcomingSessions,
-  getDateSessions
+  getDateSessions,
+  getSessionsWithAttendance 
 };
