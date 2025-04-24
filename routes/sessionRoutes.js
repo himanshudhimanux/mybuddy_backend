@@ -12,7 +12,7 @@ router.delete("/sessions/:id", verifyToken, roleCheck('admin'), deleteSession);
 router.get("/sessions/type/:type", verifyToken, roleCheck('admin'), getSessionsByType);
 
 // Get sessions and attendance for a student
-router.get('/sessions-attendance/:studentId', getSessionsWithAttendance );
+router.get('/sessions-attendance/:studentId', verifyToken, getSessionsWithAttendance );
 
 router.get("/upcoming-classess", verifyToken,  getUpcomingSessions);
 
