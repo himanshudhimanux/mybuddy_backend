@@ -1,11 +1,9 @@
-// controllers/testScheduleController.js
 const moment = require('moment');
 const TestSchedule = require('../models/TestSchedule');
 const TestType = require('../models/TestTypes');
 const { default: mongoose } = require('mongoose');
-const BatchClass = require('../models/BatchClass');
+const Course = require('../models/Course'); // Changed from BatchClass
 const Subject = require('../models/Subject');
-
 
 
 // Create Test Schedule Handler
@@ -13,51 +11,52 @@ exports.createTestSchedule = async (req, res) => {
   try {
     const {
       testTypeId,
-      batchId,
+      courseId,
       subjectId,
-      testDate,
-      testTime,
+      syllabus,
+      comment,
+      testDate, // only used if sessionType is 'Single'
       status,
-      sessionMode,
+      sessionType,
       maxMarks,
       minMarks,
       scheduleDetails,
     } = req.body;
 
-    // Fetch test type, batch, and subject by ID
-    const testType = await TestType.findOne({ _id: testTypeId });
-    const batch = await BatchClass.findOne({ _id: batchId });
-    const subject = await Subject.findOne({ _id: subjectId });
+    const testType = await TestType.findById(testTypeId);
+    const course = await Course.findById(courseId);
+    const subject = await Subject.findById(subjectId);
 
-    console.log("Test Type", testType);
-    console.log("Batch", batch);
-    console.log("Subject", subject);
+    console.log("testType", testType)
+    console.log("course", course)
+    console.log("subject", subject)
 
-    // If any of them is not found, return an error
-    if (!testType || !batch || !subject) {
+    if (!testType || !course || !subject) {
       return res.status(400).json({
         success: false,
-        message: 'Test Type, Batch or Subject not found',
+        message: 'Test Type, Course, or Subject not found',
       });
     }
 
-    const testScheduleData = {
-      testTypeId: testType._id,
-      batchId: batch._id,
-      subjectId: subject._id,
+    const testSchedules = generateTestSchedules({
+      testTypeId,
+      courseId,
+      subjectId,
+      syllabus,
+      comment,
       testDate,
-      testTime,
       status,
-      sessionMode,
+      sessionType,
       maxMarks,
       minMarks,
-    };
+      scheduleDetails,
+    });
 
-    // Generate multiple test schedules based on session type
-    const testSchedules = generateTestSchedules(testScheduleData);
+    console.log("testSchedules", testSchedules)
 
-    // Save test schedules to the database
     const createdTestSchedules = await TestSchedule.insertMany(testSchedules);
+
+    console.log("createdTestSchedules", createdTestSchedules)
 
     res.status(201).json({ success: true, data: createdTestSchedules });
   } catch (error) {
@@ -67,70 +66,145 @@ exports.createTestSchedule = async (req, res) => {
 };
 
 
-// Generate Test Schedules Utility
-exports.generateTestSchedules = (data) => {
-  const { scheduleDetails, testDate, testTime } = data;
-  const { startDate, endDate, repeatEvery, weeklyDays, onDay, monthlyDay } = scheduleDetails;
 
-  const testSchedules = [];
+// Generate Test Schedules Utility
+const generateTestSchedules = (data) => {
+  const {
+    scheduleDetails,
+    sessionType,
+    testDate,
+    testTypeId,
+    courseId,
+    subjectId,
+    syllabus,
+    comment,
+    status,
+    maxMarks,
+    minMarks,
+  } = data;
+
+  const schedules = [];
+
+  if (sessionType === 'Single') {
+    schedules.push({
+      testDate: new Date(testDate),
+      testTypeId,
+      courseId,
+      subjectId,
+      syllabus,
+      comment,
+      status,
+      sessionType,
+      maxMarks,
+      minMarks,
+      scheduleDetails: {
+        startDate: new Date(testDate),
+        endDate: new Date(testDate),
+        startTime: scheduleDetails.startTime,
+        endTime: scheduleDetails.endTime,
+      },
+    });
+    return schedules;
+  }
+
+  const {
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    repeatEvery,
+    weeklyDays = [],
+    onDay,
+    onThe,
+  } = scheduleDetails;
+
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  // For a single test
-  if (!repeatEvery) {
-    testSchedules.push({
-      ...data,
-      testDate: startDate,
-      testTime,
-    });
-  }
-  // For recurring tests on a daily basis
-  else if (repeatEvery === 'Every Day') {
-    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-      testSchedules.push({
-        ...data,
-        testDate: new Date(date),
-        testTime,
+  if (sessionType === 'Every Day') {
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      schedules.push({
+        testDate: new Date(d),
+        testTypeId,
+        courseId,
+        subjectId,
+        syllabus,
+        comment,
+        status,
+        sessionType,
+        maxMarks,
+        minMarks,
+        scheduleDetails: {
+          startDate,
+          endDate,
+          startTime,
+          endTime,
+        },
       });
     }
-  }
-  // For weekly repeating tests
-  else if (repeatEvery === 'Weekly') {
-    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-      const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-      if (weeklyDays.includes(dayOfWeek)) {
-        testSchedules.push({
-          ...data,
-          testDate: new Date(date),
-          testTime,
+  } else if (sessionType === 'Weekly') {
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      if (weeklyDays.includes(day)) {
+        schedules.push({
+          testDate: new Date(d),
+          testTypeId,
+          courseId,
+          subjectId,
+          syllabus,
+          comment,
+          status,
+          sessionType,
+          maxMarks,
+          minMarks,
+          scheduleDetails: {
+            startDate,
+            endDate,
+            startTime,
+            endTime,
+            weeklyDays,
+            repeatEvery,
+          },
         });
       }
     }
-  }
-  // For monthly recurring tests
-  else if (repeatEvery === 'Monthly') {
-    for (let date = start; date <= end; date.setMonth(date.getMonth() + 1)) {
-      if (onDay) {
-        const testDate = new Date(date.getFullYear(), date.getMonth(), onDay);
-        testSchedules.push({
-          ...data,
-          testDate,
-          testTime,
-        });
-      } else if (monthlyDay) {
-        const testDate = new Date(date.getFullYear(), date.getMonth(), monthlyDay);
-        testSchedules.push({
-          ...data,
-          testDate,
-          testTime,
+  } else if (sessionType === 'Monthly') {
+    const monthStart = new Date(start);
+    while (monthStart <= end) {
+      const date = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth(),
+        onDay || 1
+      );
+      if (date >= start && date <= end) {
+        schedules.push({
+          testDate: date,
+          testTypeId,
+          courseId,
+          subjectId,
+          syllabus,
+          comment,
+          status,
+          sessionType,
+          maxMarks,
+          minMarks,
+          scheduleDetails: {
+            startDate,
+            endDate,
+            startTime,
+            endTime,
+            repeatEvery,
+            onDay,
+            onThe,
+          },
         });
       }
+      monthStart.setMonth(monthStart.getMonth() + 1);
     }
   }
 
-  return testSchedules;
+  return schedules;
 };
-
 
 
 // Get All TestSchedules
@@ -139,7 +213,6 @@ exports.getAllTestSchedules = async (req, res) => {
     const testSchedules = await TestSchedule.find().populate('testTypeId');
     res.status(200).json({ success: true, data: testSchedules });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, message: 'Error fetching test schedules' });
   }
 };
@@ -147,34 +220,29 @@ exports.getAllTestSchedules = async (req, res) => {
 // Get TestSchedule by ID
 exports.getTestScheduleById = async (req, res) => {
   try {
-
     const testSchedule = await TestSchedule.findById(req.params.id).populate('testTypeId');
 
-
     if (!testSchedule) {
-      return res.status(200).json({ success: false, message: 'Test Schedule not found' }); // ✅ status 200 with success: false
+      return res.status(200).json({ success: false, message: 'Test Schedule not found' });
     }
 
     return res.status(200).json({ success: true, data: testSchedule });
   } catch (err) {
-    console.error("Error fetching test schedule:", err);
     return res.status(500).json({ success: false, message: 'Error fetching test schedule' });
   }
 };
-
-
 
 // Update TestSchedule
 exports.updateTestSchedule = async (req, res) => {
   try {
     const {
-      testDate, testTypeId, batchId, subjectId, syllabus, comment,
+      testDate, testTypeId, courseId, subjectId, syllabus, comment,
       startTime, endTime, sessionType, status, maxMarks, minMarks
     } = req.body;
 
     const updatedTestSchedule = await TestSchedule.findByIdAndUpdate(
       req.params.id,
-      { testDate, testTypeId, batchId, subjectId, syllabus, comment, startTime, endTime, sessionType, status, maxMarks, minMarks },
+      { testDate, testTypeId, courseId, subjectId, syllabus, comment, startTime, endTime, sessionType, status, maxMarks, minMarks },
       { new: true }
     );
 
@@ -184,7 +252,6 @@ exports.updateTestSchedule = async (req, res) => {
 
     res.status(200).json({ success: true, data: updatedTestSchedule });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, message: 'Error updating test schedule' });
   }
 };
@@ -198,156 +265,94 @@ exports.deleteTestSchedule = async (req, res) => {
     }
     res.status(200).json({ success: true, message: 'Test Schedule deleted' });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, message: 'Error deleting test schedule' });
   }
 };
 
-
-
-// exports.getUpcomingTests = async (req, res) => {
-//   try {
-//     const { batchId, subjectId } = req.query;
-
-//     if (!batchId || !subjectId) {
-//       return res.status(400).json({ message: "Batch ID and Subject ID are required" });
-//     }
-
-//     const batchObjectId = new mongoose.Types.ObjectId(batchId);
-//     const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
-
-//     const currentDate = moment().utc().startOf('day');
-//     const fiveDaysLater = moment().utc().add(5, 'days').endOf('day');
-
-//     console.log("Looking for tests between", currentDate.toISOString(), "and", fiveDaysLater.toISOString());
-
-//     const allTests = await TestSchedule.find({});
-//     console.log("All test entries for debugging:", allTests);
-
-//     const tests = await TestSchedule.find({
-//       batchId: batchObjectId,
-//       subjectId: subjectObjectId,
-//       testDate: {
-//         $gte: currentDate.toDate(),
-//         $lte: fiveDaysLater.toDate(),
-//       },
-//       status: "Active",
-//     }).populate("batchId subjectId testTypeId");
-
-//     console.log("Matching tests:", tests);
-
-//     if (!tests.length) {
-//       return res.status(404).json({ message: "No upcoming tests found for this batch and subject" });
-//     }
-
-//     return res.status(200).json(tests);
-//   } catch (error) {
-//     console.error("Error fetching upcoming tests:", error);
-//     return res.status(500).json({ message: "Error fetching upcoming tests" });
-//   }
-// };
-
-
-exports.getUpcomingTests = async (req, res) => {
+// Get Upcoming Tests
+// Get Tests for Selected Date and Course
+exports.getUpcomingTestsByDate = async (req, res) => {
   try {
-    const { batchId, startDate, endDate } = req.query;
+    const { courseId, selectedDate } = req.query;
 
-    // Date setup
-    const start = startDate
-      ? moment(startDate).utc().startOf('day')
-      : moment().utc().startOf('day');
+    if (!courseId || !selectedDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID and selected date are required',
+      });
+    }
 
-    const end = endDate
-      ? moment(endDate).utc().endOf('day')
-      : moment().utc().add(7, 'days').endOf('day');
+    const start = moment.utc(selectedDate).startOf('day');
+    const end = moment.utc(selectedDate).endOf('day');
 
-    // Query setup
     const query = {
-      testDate: {
-        $gte: start.toDate(),
-        $lte: end.toDate(),
-      },
+      courseId: new mongoose.Types.ObjectId(courseId),
+      testDate: { $gte: start.toDate(), $lte: end.toDate() },
       status: 'Active',
     };
 
-    if (batchId) {
-      query.batchId = new mongoose.Types.ObjectId(batchId);
-    }
-
     const tests = await TestSchedule.find(query)
-      .populate('batchId testTypeId subjectId');
+      .sort({ testDate: 1 })
+      .populate('courseId testTypeId subjectId');
 
     if (!tests.length) {
       return res.status(200).json({
         success: false,
-        message: 'No upcoming tests found in the selected duration.',
+        message: 'No tests found for the selected date.',
         data: [],
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Upcoming tests fetched successfully',
+      message: 'Tests fetched successfully.',
       data: tests,
     });
-
   } catch (error) {
-    console.error("Error fetching upcoming tests:", error);
+    console.error('Error fetching tests:', error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error while fetching upcoming tests',
+      message: 'Internal server error while fetching tests.',
     });
   }
 };
 
 
+
+// Get Past Tests
 exports.getPastTests = async (req, res) => {
   try {
-    const { batchId, startDate, endDate } = req.query;
+    const { courseId, startDate, endDate } = req.query;
 
-    if (!batchId) {
+    if (!courseId) {
       return res.status(400).json({
         success: false,
-        message: 'Batch ID is required to fetch past tests',
+        message: 'Course ID is required to fetch past tests',
       });
     }
 
     const start = startDate
       ? moment(startDate).utc().startOf('day')
-      : moment('2000-01-01').utc(); // Earliest possible date
+      : moment('2000-01-01').utc();
 
     const end = endDate
       ? moment(endDate).utc().endOf('day')
-      : moment().utc().subtract(1, 'day').endOf('day'); // Until yesterday
+      : moment().utc().endOf('day');
 
     const tests = await TestSchedule.find({
-      batchId: new mongoose.Types.ObjectId(batchId),
-      testDate: {
-        $gte: start.toDate(),
-        $lte: end.toDate(),
-      },
+      courseId: new mongoose.Types.ObjectId(courseId),
+      testDate: { $gte: start.toDate(), $lte: end.toDate() },
       status: 'Active',
-    }).populate('batchId testTypeId subjectId');
-
-    if (!tests.length) {
-      return res.status(200).json({
-        success: false,
-        message: 'No past tests found for this batch.',
-        data: [],
-      });
-    }
+    }).populate('courseId subjectId testTypeId');
 
     return res.status(200).json({
       success: true,
-      message: 'Past tests fetched successfully',
       data: tests,
     });
-
   } catch (error) {
-    console.error('Error fetching past tests:', error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error while fetching past tests',
+      message: 'Error fetching past tests',
     });
   }
 };

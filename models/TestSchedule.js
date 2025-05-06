@@ -11,9 +11,9 @@ const testScheduleSchema = new mongoose.Schema({
     ref: 'TestType',
     required: true,
   },
-  batchId: {
+  courseId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'BatchClass',
+    ref: 'Course',
     required: true,
   },
   subjectId: {

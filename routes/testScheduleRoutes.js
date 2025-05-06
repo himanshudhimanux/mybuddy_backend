@@ -9,6 +9,7 @@ const {
   deleteTestSchedule,
   getUpcomingTests,
   getPastTests,
+  getUpcomingTestsByDate,
 } = require('../controllers/testScheduleController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
@@ -21,12 +22,11 @@ router.post('/create-test-schedule', verifyToken, createTestSchedule);
 router.get('/get-test-schedules', verifyToken,  getAllTestSchedules);
 
 
-
 // Get a specific TestSchedule by ID
 router.get('/single-test/:id', verifyToken, getTestScheduleById);
 
 
-router.get('/upcoming-tests', verifyToken, getUpcomingTests)
+router.get('/upcoming-tests', verifyToken, getUpcomingTestsByDate)
 
 
 router.get('/test/past', verifyToken, getPastTests)
@@ -37,7 +37,7 @@ router.put('/update-test-schedule/:id', verifyToken, updateTestSchedule);
 
 
 // Delete a TestSchedule by ID
-router.delete('/delete-schedule:id', verifyToken, deleteTestSchedule);
+router.delete('/delete-schedule/:id', verifyToken, deleteTestSchedule);
 
 
 
