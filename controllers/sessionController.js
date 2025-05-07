@@ -7,9 +7,9 @@ const Batch = require("../models/BatchSchema");
 const BatchStudent = require("../models/BatchStudentSchema")
 
 // Create Session Handler
+// Create Session Handler
 const createSession = async (req, res) => {
   try {
-
     const {
       batchClassId,
       batchDate,
@@ -22,26 +22,24 @@ const createSession = async (req, res) => {
       scheduleDetails,
       absentNotification,
       presentNotification,
+      roomNo, // ✅ New field added
     } = req.body;
 
-    // Fetch the batch class, teacher, and subject by name
+    // Fetch the batch class, teacher, and subject by ID
     const batchClass = await BatchClass.findOne({ _id: batchClassId });
     const teacher = await Teacher.findOne({ _id: teacherId });
     const subject = await Subject.findOne({ _id: subjectId });
 
     console.log("Batch Class ID", batchClass);
-    console.log("Teacher", teacher)
-    console.log("subject", teacher)
+    console.log("Teacher", teacher);
+    console.log("Subject", subject);
 
-
-    // If any of them is not found, return an error
     if (!batchClass || !teacher || !subject) {
       return res.status(400).json({
         success: false,
         message: 'Batch Class, Teacher or Subject not found',
       });
     }
-
 
     const sessionData = {
       batchClassId: batchClass._id,
@@ -55,6 +53,7 @@ const createSession = async (req, res) => {
       scheduleDetails,
       absentNotification,
       presentNotification,
+      roomNo, // ✅ Include in session data
     };
 
     // Generate multiple sessions based on sessionType
@@ -72,10 +71,8 @@ const createSession = async (req, res) => {
 
 // Generate Sessions Utility
 const generateSessions = (data) => {
-
-
   const { sessionType, scheduleDetails } = data;
-  const { startDate, endDate, startTime, endTime, weeklyDays, repeatEvery, onDay, onThe } = scheduleDetails;
+  const { startDate, endDate, weeklyDays, repeatEvery, onDay } = scheduleDetails;
 
   const sessions = [];
   const start = new Date(startDate);
@@ -87,14 +84,14 @@ const generateSessions = (data) => {
       batchDate: startDate,
     });
   } else if (sessionType === 'Every Day') {
-    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
       sessions.push({
         ...data,
         batchDate: new Date(date),
       });
     }
   } else if (sessionType === 'Weekly') {
-    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
       const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
       if (weeklyDays.includes(dayOfWeek)) {
         sessions.push({
@@ -104,7 +101,7 @@ const generateSessions = (data) => {
       }
     }
   } else if (sessionType === 'Monthly') {
-    for (let date = start; date <= end; date.setMonth(date.getMonth() + repeatEvery)) {
+    for (let date = new Date(start); date <= end; date.setMonth(date.getMonth() + repeatEvery)) {
       if (onDay) {
         const sessionDate = new Date(date.getFullYear(), date.getMonth(), onDay);
         sessions.push({
@@ -117,6 +114,8 @@ const generateSessions = (data) => {
 
   return sessions;
 };
+
+
 
 // Get all sessions with search, pagination, and filtering
 const getSessions = async (req, res) => {
@@ -269,7 +268,10 @@ const getSessionsWithAttendance = async (req, res) => {
     const sessions = await Session.find({
       batchClassId: { $in: batchClassIds },
       batchDate: { $gte: startOfDay, $lte: endOfDay }
-    }).lean();
+    })
+    .populate('subjectId', 'name')       // ✅ Get subject name
+    .populate('teacherId', 'name')       // ✅ Get teacher name
+    .lean();
 
     // Step 4: Append attendance
     const sessionsWithAttendance = await Promise.all(
@@ -280,7 +282,13 @@ const getSessionsWithAttendance = async (req, res) => {
         }).lean();
 
         return {
-          ...session,
+          _id: session._id,
+          batchDate: session.batchDate,
+          classType: session.classType,
+          sessionMode: session.sessionMode,
+          roomNo: session.roomNo || null, // ✅ Include roomNo
+          subject: session.subjectId?.name || null,
+          teacher: session.teacherId?.name || null,
           attendance: attendance || null,
         };
       })
@@ -296,7 +304,6 @@ const getSessionsWithAttendance = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 
 
 
@@ -327,6 +334,7 @@ const getUpcomingSessions = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching upcoming sessions' });
   }
 };
+
 
 
 const getDateSessions = async (req, res) => {

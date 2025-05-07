@@ -50,6 +50,10 @@ const sessionSchema = new mongoose.Schema({
     onDay: { type: Number }, // For Monthly
     onThe: { type: String }, // For Monthly (e.g., 'First', 'Second')
   },
+  roomNo: {
+    type: String,
+    default: '', // Optional: you can make it required if needed
+  },
   absentNotification: {
     type: Boolean,
     default: false,
