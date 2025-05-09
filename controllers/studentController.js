@@ -1,5 +1,11 @@
+const mongoose = require('mongoose');
 const multer = require("multer");
 const Student = require("../models/Student");
+// controllers/studentTodayInfo.js
+const Session = require('../models/Session');
+const TestSchedule = require('../models/TestSchedule');
+const StudentPunch = require('../models/StudnetPunch');
+
 
 // Function to generate registration numbers
 const generateRegistrationNumber = async () => {
@@ -129,6 +135,8 @@ const specificStudent = async (req, res) => {
         res.status(500).json({ message: "Error fetching student", error: error.message });
     }
 };
+
+
 
 
 
@@ -264,6 +272,61 @@ const switchStudentProfile = async (req, res) => {
 };
 
 
+
+
+const getTodayStudentInfo = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid studentId' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Get today sessions (Regular class)
+    const todaySessions = await Session.find({
+      batchDate: { $gte: today, $lt: tomorrow },
+      status: 'Active',
+      classType: { $in: ['Regular', 'Revision', 'Guest Lecture', 'Other'] }
+    })
+      .populate('subjectId teacherId batchClassId');
+
+    // Get today tests
+    const todayTests = await TestSchedule.find({
+      testDate: { $gte: today, $lt: tomorrow },
+      status: 'Active'
+    })
+      .populate('subjectId testTypeId courseId');
+
+    // Get today's punch times for the student
+    const punches = await StudentPunch.find({
+      studentId,
+      punchTime: { $gte: today, $lt: tomorrow }
+    }).sort({ punchTime: 1 });
+
+    const punchIn = punches.find(p => p.type === 'IN');
+    const punchOut = punches.reverse().find(p => p.type === 'OUT');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Student today data fetched successfully',
+      data: {
+        sessions: todaySessions,
+        tests: todayTests,
+        punchInTime: punchIn ? punchIn.punchTime : null,
+        punchOutTime: punchOut ? punchOut.punchTime : null
+      }
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
 module.exports = { 
     studentPicUpload: upload.single("photo"), // Middleware for file upload
     studentRegister, 
@@ -272,5 +335,6 @@ module.exports = {
     updateStudent, 
     deleteStudent ,
     getStudentsByFatherPhone, 
-    switchStudentProfile
+    switchStudentProfile,
+    getTodayStudentInfo
 };
