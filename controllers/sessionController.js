@@ -269,11 +269,11 @@ const getSessionsWithAttendance = async (req, res) => {
       batchClassId: { $in: batchClassIds },
       batchDate: { $gte: startOfDay, $lte: endOfDay }
     })
-    .populate('subjectId', 'name')       // ✅ Get subject name
-    .populate('teacherId', 'name')       // ✅ Get teacher name
+    .populate('subjectId', 'name')
+    .populate('teacherId', 'name')
     .lean();
 
-    // Step 4: Append attendance
+    // Step 4: Append attendance + scheduleDetails
     const sessionsWithAttendance = await Promise.all(
       sessions.map(async session => {
         const attendance = await Attendance.findOne({
@@ -286,9 +286,10 @@ const getSessionsWithAttendance = async (req, res) => {
           batchDate: session.batchDate,
           classType: session.classType,
           sessionMode: session.sessionMode,
-          roomNo: session.roomNo || null, // ✅ Include roomNo
+          roomNo: session.roomNo || null,
           subject: session.subjectId?.name || null,
           teacher: session.teacherId?.name || null,
+          scheduleDetails: session.scheduleDetails || null, // ✅ Include scheduleDetails
           attendance: attendance || null,
         };
       })
@@ -304,6 +305,7 @@ const getSessionsWithAttendance = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
 
 
 
