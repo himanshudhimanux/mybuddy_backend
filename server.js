@@ -22,10 +22,11 @@ const razorpayRoutes = require('./routes/razorpayRoutes');
 const courseStudentRoutes = require('./routes/courseStudentRoutes');
 const testTypesRoutes = require("./routes/testTypesRoutes");
 const testScheduleRoutes = require("./routes/testScheduleRoutes");
-const testMarksRoutes = require("./routes/testMarksRoutes")
+const testMarksRoutes = require("./routes/testMarksRoutes");
+const studentPunchRoutes = require("./routes/studentPunchRoutes")
+
 
 const path = require('path');
-
 
 const app = express();
 const port = process.env.PORT || 5100;
@@ -69,7 +70,7 @@ app.use("/api", courseStudentRoutes)
 app.use("/api", testTypesRoutes);
 app.use("/api", testScheduleRoutes)
 app.use("/api", testMarksRoutes);
-
+app.use("/api", studentPunchRoutes);
 
 // ========= Routes end=============
 
