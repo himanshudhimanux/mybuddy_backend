@@ -234,80 +234,6 @@ const getSessionsByType = async (req, res) => {
 };
 
 
-// const getSessionsWithAttendance = async (req, res) => {
-//   try {
-//     const { date } = req.query;
-//     const { studentId } = req.params;
-
-//     if (!studentId) {
-//       return res.status(400).json({ success: false, message: "StudentId is required" });
-//     }
-
-//     const parsedDate = new Date(date);
-//     const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
-//     const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
-
-//     // Step 1: Get the batchId of the student
-//     const studentBatch = await BatchStudent.findOne({ studentId });
-//     if (!studentBatch) {
-//       return res.status(404).json({ success: false, message: "Student not assigned to any batch" });
-//     }
-
-//     const batchId = studentBatch.batchId;
-
-//     // Step 2: Find all BatchClasses with matching batchId
-//     const batchClasses = await BatchClass.find({ batchId }).select('_id');
-//     const batchClassIds = batchClasses.map(cls => cls._id);
-
-//     if (!batchClassIds.length) {
-//       return res.status(200).json({ success: true, sessions: [] });
-//     }
-
-//     // Step 3: Find sessions for these batchClasses on selected date
-//     const sessions = await Session.find({
-//       batchClassId: { $in: batchClassIds },
-//       batchDate: { $gte: startOfDay, $lte: endOfDay }
-//     })
-//     .populate('subjectId', 'name')
-//     .populate('teacherId', 'name')
-//     .lean();
-
-//     // Step 4: Append attendance + scheduleDetails
-//     const sessionsWithAttendance = await Promise.all(
-
-//       sessions.map(async session => {
-//         const attendance = await Attendance.findOne({
-//           sessionId: session._id,
-//           studentId: studentId,
-//         }).lean();
-
-//         return {
-//           _id: session._id,
-//           batchDate: session.batchDate,
-//           classType: session.classType,
-//           sessionMode: session.sessionMode,
-//           roomNo: session.roomNo || null,
-//           subject: session.subjectId?.name || null,
-//           teacher: session.teacherId?.name || null,
-//           scheduleDetails: session.scheduleDetails || null, // ✅ Include scheduleDetails
-//           attendance: attendance || null,
-//         };
-//       })
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       sessions: sessionsWithAttendance,
-//     });
-
-
-//   } catch (error) {
-//     console.error("Error:", error);
-//     res.status(500).json({ success: false, message: "Internal server error" });
-//   }
-// };
-
-
 const getSessionsWithAttendance = async (req, res) => {
   try {
     const { date } = req.query;
@@ -320,9 +246,6 @@ const getSessionsWithAttendance = async (req, res) => {
     const parsedDate = new Date(date);
     const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
-
-    // ✅ Find the weekday from selected date (0 = Sunday, 6 = Saturday)
-    const weekday = startOfDay.getDay();
 
     // Step 1: Get the batchId of the student
     const studentBatch = await BatchStudent.findOne({ studentId });
@@ -349,15 +272,10 @@ const getSessionsWithAttendance = async (req, res) => {
     .populate('teacherId', 'name')
     .lean();
 
-    // ✅ Step 4: Filter sessions by scheduleDetails.weekDays
-    const filteredSessions = sessions.filter(session => {
-      const weekDays = session.scheduleDetails?.weekDays || [];
-      return weekDays.includes(weekday);
-    });
-
-    // Step 5: Append attendance + scheduleDetails
+    // Step 4: Append attendance + scheduleDetails
     const sessionsWithAttendance = await Promise.all(
-      filteredSessions.map(async session => {
+
+      sessions.map(async session => {
         const attendance = await Attendance.findOne({
           sessionId: session._id,
           studentId: studentId,
@@ -371,7 +289,7 @@ const getSessionsWithAttendance = async (req, res) => {
           roomNo: session.roomNo || null,
           subject: session.subjectId?.name || null,
           teacher: session.teacherId?.name || null,
-          scheduleDetails: session.scheduleDetails || null,
+          scheduleDetails: session.scheduleDetails || null, // ✅ Include scheduleDetails
           attendance: attendance || null,
         };
       })
@@ -382,11 +300,93 @@ const getSessionsWithAttendance = async (req, res) => {
       sessions: sessionsWithAttendance,
     });
 
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+// const getSessionsWithAttendance = async (req, res) => {
+//   try {
+//     const { date } = req.query;
+//     const { studentId } = req.params;
+
+//     if (!studentId) {
+//       return res.status(400).json({ success: false, message: "StudentId is required" });
+//     }
+
+//     const parsedDate = new Date(date);
+//     const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
+//     const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
+
+//     // ✅ Find the weekday from selected date (0 = Sunday, 6 = Saturday)
+//     const weekday = startOfDay.getDay();
+
+//     // Step 1: Get the batchId of the student
+//     const studentBatch = await BatchStudent.findOne({ studentId });
+//     if (!studentBatch) {
+//       return res.status(404).json({ success: false, message: "Student not assigned to any batch" });
+//     }
+
+//     const batchId = studentBatch.batchId;
+
+//     // Step 2: Find all BatchClasses with matching batchId
+//     const batchClasses = await BatchClass.find({ batchId }).select('_id');
+//     const batchClassIds = batchClasses.map(cls => cls._id);
+
+//     if (!batchClassIds.length) {
+//       return res.status(200).json({ success: true, sessions: [] });
+//     }
+
+//     // Step 3: Find sessions for these batchClasses on selected date
+//     const sessions = await Session.find({
+//       batchClassId: { $in: batchClassIds },
+//       batchDate: { $gte: startOfDay, $lte: endOfDay }
+//     })
+//     .populate('subjectId', 'name')
+//     .populate('teacherId', 'name')
+//     .lean();
+
+//     // ✅ Step 4: Filter sessions by scheduleDetails.weekDays
+//     const filteredSessions = sessions.filter(session => {
+//       const weekDays = session.scheduleDetails?.weekDays || [];
+//       return weekDays.includes(weekday);
+//     });
+
+//     // Step 5: Append attendance + scheduleDetails
+//     const sessionsWithAttendance = await Promise.all(
+//       filteredSessions.map(async session => {
+//         const attendance = await Attendance.findOne({
+//           sessionId: session._id,
+//           studentId: studentId,
+//         }).lean();
+
+//         return {
+//           _id: session._id,
+//           batchDate: session.batchDate,
+//           classType: session.classType,
+//           sessionMode: session.sessionMode,
+//           roomNo: session.roomNo || null,
+//           subject: session.subjectId?.name || null,
+//           teacher: session.teacherId?.name || null,
+//           scheduleDetails: session.scheduleDetails || null,
+//           attendance: attendance || null,
+//         };
+//       })
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       sessions: sessionsWithAttendance,
+//     });
+
+//   } catch (error) {
+//     console.error("Error:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// };
 
 
 
