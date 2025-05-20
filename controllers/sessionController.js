@@ -472,7 +472,6 @@ const getSessionsByType = async (req, res) => {
 // };
 
 
-
 const getSessionsWithAttendance = async (req, res) => {
   try {
     const { date } = req.query;
@@ -485,9 +484,6 @@ const getSessionsWithAttendance = async (req, res) => {
     const parsedDate = new Date(date);
     const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
-
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const selectedWeekDay = daysOfWeek[startOfDay.getDay()];
 
     const studentBatch = await BatchStudent.findOne({ studentId });
     if (!studentBatch) {
@@ -511,22 +507,18 @@ const getSessionsWithAttendance = async (req, res) => {
       .populate('teacherId', 'name')
       .lean();
 
-    const filteredSessions = sessions.filter(session => {
-      const sessionWeekDay = session.scheduleDetails?.weekDay;
-      return sessionWeekDay === selectedWeekDay;
-    });
-
+    // No filtering here — we want to return all valid sessions
     const sessionsWithAttendance = await Promise.all(
-      filteredSessions.map(async session => {
+      sessions.map(async session => {
         const attendance = await Attendance.findOne({
           sessionId: session._id,
           studentId,
         }).lean();
 
-        // ❌ Remove only 'weeklyDays' from scheduleDetails
+        // Remove weeklyDays or weekDay from scheduleDetails
         let cleanedScheduleDetails = null;
         if (session.scheduleDetails) {
-          const { weeklyDays, ...rest } = session.scheduleDetails;
+          const { weeklyDays, weekDay, ...rest } = session.scheduleDetails;
           cleanedScheduleDetails = rest;
         }
 
