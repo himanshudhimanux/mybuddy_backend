@@ -138,7 +138,6 @@ exports.getFeeDetailsByStudentId = async (req, res) => {
 };
 
 
-
 exports.submitFee = async (req, res) => {
   const {
     fee_id,
@@ -148,14 +147,14 @@ exports.submitFee = async (req, res) => {
     transaction_no,
     amount_received_by,
     comment,
-    date
+    // date removed from here
   } = req.body;
 
   try {
     const fee = await Fee.findById(fee_id);
     if (!fee) return res.status(404).json({ message: "Fee record not found" });
 
-    // FeeHistory create
+    // FeeHistory create with automatic date
     const history = new FeeHistory({
       fees_id: fee._id,
       amount,
@@ -165,7 +164,7 @@ exports.submitFee = async (req, res) => {
       transaction_no,
       amount_received_by,
       comment,
-      date,
+      date: new Date(), // automatic current date
     });
 
     await history.save();
@@ -191,6 +190,7 @@ exports.submitFee = async (req, res) => {
     res.status(500).json({ message: "Fee submit failed" });
   }
 };
+
 
 
 

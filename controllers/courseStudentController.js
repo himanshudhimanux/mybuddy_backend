@@ -1,4 +1,4 @@
-const CourseStudent = require('../models/CourseStudentSchema'); 
+const CourseStudent = require('../models/CourseStudentSchema');
 const Course = require('../models/Course');
 const Subject = require('../models/Subject');
 
@@ -49,7 +49,7 @@ const createCourseStudent = async (req, res) => {
 
         const totalSubjectFees = subjects.reduce((total, subject) => total + Number(subject.subjectFee), 0);
 
-    console.log("total fee", totalSubjectFees)
+        console.log("total fee", totalSubjectFees)
 
         // Generate student roll number for this course
         const lastStudent = await CourseStudent.find({ courseId }).sort({ studentRollNo: -1 }).limit(1);
@@ -121,7 +121,7 @@ const getStudentCourseDetails = async (req, res) => {
 
 
 
-module.exports={
+module.exports = {
     createCourseStudent,
     getStudentCourseDetails
 }
