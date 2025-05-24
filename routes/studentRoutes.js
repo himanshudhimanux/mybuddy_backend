@@ -20,6 +20,6 @@ router.delete("/:id", deleteStudent); // Delete a specific student
 
 router.get("/student-today-data/:studentId", verifyToken, getTodayStudentInfo )
 
-router.get('/student/performance/search', verifyToken, searchStudentPerformance)
+router.get('/student/performance/search', searchStudentPerformance)
 
 module.exports = router;
