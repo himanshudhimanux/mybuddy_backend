@@ -271,9 +271,6 @@ const switchStudentProfile = async (req, res) => {
     }
 };
 
-
-
-
 const getTodayStudentInfo = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -327,6 +324,53 @@ const getTodayStudentInfo = async (req, res) => {
 };
 
 
+// Search student by registrationNumber OR name OR fatherName
+const searchStudentPerformance =  async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        if (!query || query.trim() === "") {
+            return res.status(400).json({
+                success: false,
+                message: "Search query is required",
+            });
+        }
+
+        // Case-insensitive partial match search
+        const searchRegex = new RegExp(query, 'i');
+
+        const student = await Student.findOne({
+            $or: [
+                { registrationNumber: searchRegex },
+                { name: searchRegex },
+                { fatherName: searchRegex },
+            ]
+        });
+
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: "No student found matching the query",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Student found successfully",
+            data: student
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
+    }
+}
+
+
+
 module.exports = { 
     studentPicUpload: upload.single("photo"), // Middleware for file upload
     studentRegister, 
@@ -336,5 +380,6 @@ module.exports = {
     deleteStudent ,
     getStudentsByFatherPhone, 
     switchStudentProfile,
-    getTodayStudentInfo
+    getTodayStudentInfo,
+    searchStudentPerformance
 };

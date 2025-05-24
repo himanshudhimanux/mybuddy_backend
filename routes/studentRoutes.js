@@ -1,5 +1,5 @@
 const express = require('express');
-const { studentRegister, getAllStudent, specificStudent, studentPicUpload, updateStudent, deleteStudent, switchStudentProfile, getStudentsByFatherPhone, getTodayStudentInfo } = require('../controllers/studentController');
+const { studentRegister, getAllStudent, specificStudent, studentPicUpload, updateStudent, deleteStudent, switchStudentProfile, getStudentsByFatherPhone, getTodayStudentInfo, searchStudentPerformance } = require('../controllers/studentController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
@@ -18,7 +18,8 @@ router.post('/switch-profile', verifyToken, switchStudentProfile);
 router.put("/:id", studentPicUpload, updateStudent); // Update a specific student
 router.delete("/:id", deleteStudent); // Delete a specific student
 
+router.get("/student-today-data/:studentId", verifyToken, getTodayStudentInfo )
 
-router.get("/student-today-data/:studentId", getTodayStudentInfo )
+router.get('/student/performance/search', verifyToken, searchStudentPerformance)
 
 module.exports = router;
