@@ -10,6 +10,7 @@ const {
   getUpcomingTests,
   getPastTests,
   getUpcomingTestsByDate,
+  getAllPastTestsForAdmin,
 } = require('../controllers/testScheduleController');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
@@ -40,6 +41,7 @@ router.put('/update-test-schedule/:id', verifyToken, updateTestSchedule);
 router.delete('/delete-schedule/:id', verifyToken, deleteTestSchedule);
 
 
+router.get('/admin/test/past-tests', verifyToken , getAllPastTestsForAdmin)
 
 
 

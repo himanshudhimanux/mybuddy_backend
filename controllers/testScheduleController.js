@@ -356,3 +356,23 @@ exports.getPastTests = async (req, res) => {
     });
   }
 };
+
+
+exports.getAllPastTestsForAdmin  = async (req, res) => {
+  try {
+    const today = new Date();
+
+    const pastTests = await TestSchedule.find({
+      testDate: { $lt: today }
+    })
+      .populate('testTypeId')
+      .populate('courseId')
+      .populate('subjectId')
+      .sort({ testDate: -1 }); // descending order
+
+    res.status(200).json(pastTests);
+  } catch (error) {
+    console.error('Error fetching past tests:', error);
+    res.status(500).json({ message: 'Server error fetching past tests' });
+  }
+};
