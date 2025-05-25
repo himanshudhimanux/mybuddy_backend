@@ -1,8 +1,12 @@
+const { default: mongoose } = require("mongoose");
+const CourseStudent = require("../models/CourseStudentSchema");
 const TestMarks = require("../models/TestMarks");
+const TestSchedule = require("../models/TestSchedule");
 
 
 // Create test marks
 exports.createTestMarks = async (req, res) => {
+
   try {
     const { test_id, student_id, marks_obtained, result, status } = req.body;
 
@@ -65,3 +69,55 @@ exports.getMarksByStudentAndTestId = async (req, res) => {
   }
 };
 
+
+// get student for add marks
+// exports.getStudentsByTestSchedule = async (req, res) => {
+//   try {
+//     const { scheduleId } = req.params;
+
+//     // Get test schedule
+//     const test = await TestSchedule.findById(scheduleId);
+//     if (!test) {
+//       return res.status(404).json({ message: 'Test not found' });
+//     }
+
+//     // Filter CourseStudent records
+//     const courseStudents = await CourseStudent.find({
+//       courseId: test.courseId,
+//       subjectIds: test.subjectId,
+//       status: 'Attending', // only currently attending students
+//     }).populate('studentId');
+
+//     // Extract student details
+//     const students = courseStudents.map(cs => cs.studentId);
+
+//     res.status(200).json(students);
+//   } catch (err) {
+//     console.error('Error fetching students:', err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
+
+
+// get student for add marks
+exports.getStudentsByCourseAndSubject = async (req, res) => {
+  try {
+    const { courseId, subjectId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(courseId) || !mongoose.Types.ObjectId.isValid(subjectId)) {
+      return res.status(400).json({ message: 'Invalid course or subject ID' });
+    }
+
+    const courseStudents = await CourseStudent.find({
+      courseId,
+      status: 'Attending',
+    }).populate('studentId');
+
+    const students = courseStudents.map(cs => cs.studentId);
+
+    res.status(200).json(students);
+  } catch (err) {
+    console.error('Error fetching students by course & subject:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
