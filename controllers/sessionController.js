@@ -342,27 +342,66 @@ const getUpcomingSessions = async (req, res) => {
 
 
 
-const getDateSessions = async (req, res) => {
+const getAllSessionByDate = async (req, res) => {
+
   try {
-    const { date, courseId } = req.query;
+    const { courseId, date } = req.query;
 
-    console.log("date session", date)
-    console.log("courseId", courseId)
-
-    if (!date || !courseId) {
-      return res.status(400).json({ error: 'Date and Course ID are required' });
+    if (!courseId || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'courseId और date दोनों required हैं',
+        data: []
+      });
     }
 
-    const sessions = await Session.find({
-      batchDate: new Date(date),
-      courseId,
-    }).populate('batchId');
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(selectedDate.getDate() + 1);
 
-    res.status(200).json(sessions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Step 1: Find Batches for given course
+    const batches = await Batch.find({ courseIds: courseId }, '_id');
+    const batchIds = batches.map(b => b._id);
+
+    // Step 2: Find BatchClasses for these batches
+    const batchClasses = await BatchClass.find({ batchId: { $in: batchIds } }, '_id');
+    const batchClassIds = batchClasses.map(bc => bc._id);
+
+    // Step 3: Find Sessions on selected date under those batchClasses
+    const sessions = await Session.find({
+      batchClassId: { $in: batchClassIds },
+      batchDate: { $gte: selectedDate, $lt: nextDate }
+    })
+      .populate('subjectId')
+      .populate({
+        path: 'batchClassId',
+        populate: { path: 'batchId' }
+      })
+      .populate('teacherId');
+
+    return res.status(200).json({
+      success: true,
+      message: sessions.length > 0
+        ? 'Sessions successfully fetched.'
+        : 'No sessions found for selected course and date.',
+      data: sessions
+    });
+
+  } catch (error) {
+    console.error('Error fetching sessions:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching sessions.',
+      error: error.message,
+      data: []
+    });
   }
+
 };
+
+
 
 
 module.exports = {
@@ -374,6 +413,7 @@ module.exports = {
   getSessionsByType,
   // getStudentSessionsAndAttendance,
   getUpcomingSessions,
-  getDateSessions,
-  getSessionsWithAttendance 
+  getAllSessionByDate,
+  getSessionsWithAttendance,
+  
 };

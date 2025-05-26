@@ -137,56 +137,6 @@ const getEligibleStudents = async (req, res) => {
 };
 
 
-// const getAttendanceSummary = async (req, res) => {
-//     try {
-//         const { studentId } = req.params;
-//         const { type, month, startDate, endDate } = req.query;
-
-//         let fromDate, toDate;
-
-//         if (type === 'monthly') {
-//             fromDate = moment(month + '-01').startOf('month').toDate();
-//             toDate = moment(month + '-01').endOf('month').toDate();
-//         } else if (type === 'weekly') {
-//             fromDate = moment(startDate).startOf('day').toDate();
-//             toDate = moment(endDate).endOf('day').toDate();
-//         } else {
-//             return res.status(400).json({ success: false, message: 'Invalid type' });
-//         }
-
-//         const records = await Attendance.find({
-//             studentId,
-//             attendanceDate: { $gte: fromDate, $lte: toDate }
-//         });
-
-//         const totalDays = records.length;
-//         const present = records.filter(r => r.attendanceType === 'Present').length;
-//         const absent = records.filter(r => r.attendanceType === 'Absent').length;
-//         const leave = records.filter(r => r.attendanceType === 'Leave').length;
-
-//         const percentages = {
-//             present: totalDays ? Math.round((present / totalDays) * 100) : 0,
-//             absent: totalDays ? Math.round((absent / totalDays) * 100) : 0,
-//             leave: totalDays ? Math.round((leave / totalDays) * 100) : 0
-//         };
-
-//         return res.json({
-//             success: true,
-//             data: {
-//                 totalDays,
-//                 present,
-//                 absent,
-//                 leave,
-//                 percentages
-//             }
-//         });
-//     } catch (error) {
-//         console.error('Error:', error);
-//         res.status(500).json({ success: false, message: 'Server Error' });
-//     }
-// };
-
-
 const getAttendanceSummary = async (req, res) => {
     try {
         const { studentId } = req.params;
