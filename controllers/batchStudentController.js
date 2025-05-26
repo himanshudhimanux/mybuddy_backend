@@ -174,10 +174,40 @@ const deleteBatchStudent = async (req, res) => {
     }
 };
 
+
+
+const getBatchStudentsByBatchId = async (req, res) => {
+    const { batchId } = req.params;
+
+    try {
+        const students = await BatchStudent.find({ batchId })
+            .populate('studentId', 'firstName lastName email phone') // Optional: student details
+            .populate('batchId', 'batchName startDate endDate') // Optional: batch details
+            .populate('createdBy', 'name role') // Optional: created by details
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            message: `Students fetched for batch ID: ${batchId}`,
+            data: students,
+        });
+    } catch (error) {
+        console.error('Error fetching batch students:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch batch students',
+            error: error.message,
+        });
+    }
+};
+
+
+
 module.exports = {
     createBatchStudent,
     getBatchStudents,
     getBatchStudentById,
     updateBatchStudent,
     deleteBatchStudent,
+    getBatchStudentsByBatchId
 };

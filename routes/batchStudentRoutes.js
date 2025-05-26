@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
-const { createBatchStudent, getBatchStudents, updateBatchStudent, deleteBatchStudent, getBatchStudentById } = require('../controllers/batchStudentController');
+const { createBatchStudent, getBatchStudents, updateBatchStudent, deleteBatchStudent, getBatchStudentById, getBatchStudentsByBatchId } = require('../controllers/batchStudentController');
 
 const router = express.Router();
 
@@ -11,12 +11,15 @@ router.post('/batch-student', verifyToken, roleCheck('admin'), createBatchStuden
 router.get('/batch-students', verifyToken, roleCheck('admin'), getBatchStudents);
 
 // Get all batch student by id
-router.get('/batch-students', verifyToken, roleCheck('admin'), getBatchStudentById);
+router.get('/batch-students/:id', roleCheck('admin'), getBatchStudentById);
  
 // Update a batch Student
 router.put('/update-batch-student/:id', verifyToken, roleCheck('admin'), updateBatchStudent);
 
 // Delete a batch Student
 router.delete('/delete-batch-student/:id', verifyToken, roleCheck('admin'), deleteBatchStudent);
+
+// get student  fo batch
+router.get('/getstudentby/:batchId', getBatchStudentsByBatchId);
 
 module.exports = router;

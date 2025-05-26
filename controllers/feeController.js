@@ -56,46 +56,6 @@ exports.getStudentFeeDetails = async (req, res) => {
 };
 
 
-// exports.getFeeDetailsByStudentId = async (req, res) => {
-//   const { studentId } = req.params;
-
-//   try {
-//     const feeDetails = await Fee.find({ student_id: studentId })
-//       .populate("student_id", "name email")
-//       .populate("course_student_id")
-//       .populate("created_by", "name")
-//       .populate("updated_by", "name");
-
-//     if (!feeDetails || feeDetails.length === 0) {
-//       return res.status(200).json({
-//         success: false,
-//         message: "No fee records found for this student.",
-//         data: []
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Fee details fetched successfully.",
-//       data: feeDetails
-//     });
-
-//   } catch (error) {
-//     console.error("Error fetching fee details:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while fetching fee details.",
-//       data: null
-//     });
-//   }
-// };
-
-
-
-
-// Submit Fee by Admin
-
-
 exports.getFeeDetailsByStudentId = async (req, res) => {
   const { studentId } = req.params;
 
