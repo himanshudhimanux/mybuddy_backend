@@ -181,8 +181,8 @@ const getBatchStudentsByBatchId = async (req, res) => {
 
     try {
         const students = await BatchStudent.find({ batchId })
-            .populate('studentId', 'firstName lastName email phone') // Optional: student details
-            .populate('batchId', 'batchName startDate endDate') // Optional: batch details
+            .populate('studentId', 'name email phone') // Optional: student details
+            .populate('batchId', 'name startDate endDate') // Optional: batch details
             .populate('createdBy', 'name role') // Optional: created by details
             .lean();
 
