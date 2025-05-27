@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 const multer = require("multer");
 const Student = require("../models/Student");
-// controllers/studentTodayInfo.js
 const Session = require('../models/Session');
 const TestSchedule = require('../models/TestSchedule');
 const StudentPunch = require('../models/StudnetPunch');
-
+const Attendance = require('../models/AttendanceSchema');
+const TestMarks = require('../models/TestMarks');
+const CourseStudent = require('../models/CourseStudentSchema');
+const moment = require('moment');
 
 // Function to generate registration numbers
 const generateRegistrationNumber = async () => {
@@ -369,10 +371,80 @@ const searchStudentPerformance =  async (req, res) => {
     }
 }
 
+// get student performance bio data api
+
+const getStudentPerformance = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // 1. Get full student details
+    const student = await Student.findById(studentId).lean();
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    // 2. Attendance summary (last week & last month)
+    const today = moment();
+    const lastWeek = moment().subtract(7, 'days');
+    const lastMonth = moment().subtract(30, 'days');
+
+    const attendanceRecords = await Attendance.find({
+      studentId,
+      attendanceDate: { $gte: lastMonth.toDate(), $lte: today.toDate() }
+    });
+
+    const summary = (fromDate) => {
+      const rangeData = attendanceRecords.filter(att => moment(att.attendanceDate).isAfter(fromDate));
+      return {
+        Present: rangeData.filter(a => a.attendanceType === 'Present').length,
+        Absent: rangeData.filter(a => a.attendanceType === 'Absent').length,
+        Leave: rangeData.filter(a => a.attendanceType === 'Leave').length,
+        Total: rangeData.length
+      };
+    };
+
+    const attendanceSummary = {
+      lastWeek: summary(lastWeek),
+      lastMonth: summary(lastMonth),
+    };
+
+    // 3. Test Marks Summary
+    const testMarks = await TestMarks.find({ student_id: studentId });
+
+    const totalTests = testMarks.length;
+    const appearedTests = testMarks.filter(t => t.status === "Appeared");
+    const averageMarks = appearedTests.length > 0
+      ? appearedTests.reduce((sum, t) => sum + t.marks_obtained, 0) / appearedTests.length
+      : 0;
+
+    const testSummary = {
+      totalTests,
+      appeared: appearedTests.length,
+      averageMarks: Math.round(averageMarks),
+      passed: testMarks.filter(t => t.result === "Pass").length,
+      failed: testMarks.filter(t => t.result === "Failed").length,
+    };
+
+    // 4. Course Info
+    const courseDetails = await CourseStudent.find({ studentId })
+      .populate('courseId')
+      .populate('subjectIds');
+
+    res.json({
+      student,
+      attendanceSummary,
+      testSummary,
+      courseDetails
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
-module.exports = { 
-    studentPicUpload: upload.single("photo"), // Middleware for file upload
+module.exports = {
+
+    studentPicUpload: upload.single("photo"), 
     studentRegister, 
     getAllStudent, 
     specificStudent, 
@@ -381,5 +453,7 @@ module.exports = {
     getStudentsByFatherPhone, 
     switchStudentProfile,
     getTodayStudentInfo,
-    searchStudentPerformance
+    searchStudentPerformance,
+    getStudentPerformance
+
 };
