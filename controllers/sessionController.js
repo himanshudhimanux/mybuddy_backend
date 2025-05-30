@@ -234,43 +234,133 @@ const getSessionsByType = async (req, res) => {
 };
 
 
+// const getSessionsWithAttendance = async (req, res) => {
+//   try {
+//     const { date } = req.query;
+//     const { studentId } = req.params;
+
+//     if (!studentId) {
+//       return res.status(400).json({ success: false, message: "StudentId is required" });
+//     }
+
+//     const parsedDate = new Date(date);
+//     const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
+//     const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
+
+//     const studentBatch = await BatchStudent.findOne({ studentId });
+//     if (!studentBatch) {
+//       return res.status(404).json({ success: false, message: "Student not assigned to any batch" });
+//     }
+
+//     const batchId = studentBatch.batchId;
+
+//     const batchClasses = await BatchClass.find({ batchId }).select('_id');
+//     const batchClassIds = batchClasses.map(cls => cls._id);
+
+//     if (!batchClassIds.length) {
+//       return res.status(200).json({ success: true, sessions: [] });
+//     }
+
+//     const sessions = await Session.find({
+//       batchClassId: { $in: batchClassIds },
+//       batchDate: { $gte: startOfDay, $lte: endOfDay }
+//     })
+//       .populate('subjectId', 'name')
+//       .populate('teacherId', 'name')
+//       .lean();
+
+//     // No filtering here — we want to return all valid sessions
+//     const sessionsWithAttendance = await Promise.all(
+//       sessions.map(async session => {
+//         const attendance = await Attendance.findOne({
+//           sessionId: session._id,
+//           studentId,
+//         }).lean();
+
+//         // Remove weeklyDays or weekDay from scheduleDetails
+//         let cleanedScheduleDetails = null;
+//         if (session.scheduleDetails) {
+//           const { weeklyDays, weekDay, ...rest } = session.scheduleDetails;
+//           cleanedScheduleDetails = rest;
+//         }
+
+//         return {
+//           _id: session._id,
+//           batchDate: session.batchDate,
+//           classType: session.classType,
+//           sessionMode: session.sessionMode,
+//           roomNo: session.roomNo || null,
+//           subject: session.subjectId?.name || null,
+//           teacher: session.teacherId?.name || null,
+//           scheduleDetails: cleanedScheduleDetails,
+//           attendance: attendance || null,
+//         };
+//       })
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       sessions: sessionsWithAttendance,
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching sessions:", error);
+//     return res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// };
+
 
 const getSessionsWithAttendance = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { courseId, startDate, endDate } = req.query;
     const { studentId } = req.params;
 
-    if (!studentId) {
-      return res.status(400).json({ success: false, message: "StudentId is required" });
+    if (!studentId || !courseId || !startDate || !endDate) {
+      return res.status(400).json({ success: false, message: "studentId, courseId, startDate, and endDate are required" });
     }
 
-    const parsedDate = new Date(date);
-    const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
-    const studentBatch = await BatchStudent.findOne({ studentId });
-    if (!studentBatch) {
-      return res.status(404).json({ success: false, message: "Student not assigned to any batch" });
+    // Step 1: Find student's assigned batches
+    const studentBatches = await BatchStudent.find({ studentId }).lean();
+    if (!studentBatches.length) {
+      return res.status(404).json({ success: false, message: "Student is not assigned to any batch" });
     }
 
-    const batchId = studentBatch.batchId;
+    const studentBatchIds = studentBatches.map(b => b.batchId);
 
-    const batchClasses = await BatchClass.find({ batchId }).select('_id');
+    // Step 2: Filter only those batches which match the courseId
+    const courseBatches = await Batch.find({
+      _id: { $in: studentBatchIds },
+      courseIds: courseId  // ✅ yeh `$in` jaisa kaam karega, because courseIds is an array
+    }).lean();
+
+    if (!courseBatches.length) {
+      return res.status(404).json({ success: false, message: "Student is not enrolled in this course" });
+    }
+
+    const courseBatchIds = courseBatches.map(b => b._id);
+
+    // Step 3: Get all batchClasses of these batches
+    const batchClasses = await BatchClass.find({ batchId: { $in: courseBatchIds } }).select('_id');
     const batchClassIds = batchClasses.map(cls => cls._id);
 
     if (!batchClassIds.length) {
       return res.status(200).json({ success: true, sessions: [] });
     }
 
+    // Step 4: Get all sessions in date range
     const sessions = await Session.find({
       batchClassId: { $in: batchClassIds },
-      batchDate: { $gte: startOfDay, $lte: endOfDay }
+      batchDate: { $gte: start, $lte: end }
     })
       .populate('subjectId', 'name')
       .populate('teacherId', 'name')
       .lean();
 
-    // No filtering here — we want to return all valid sessions
+    // Step 5: Attach attendance for each session
     const sessionsWithAttendance = await Promise.all(
       sessions.map(async session => {
         const attendance = await Attendance.findOne({
@@ -278,7 +368,7 @@ const getSessionsWithAttendance = async (req, res) => {
           studentId,
         }).lean();
 
-        // Remove weeklyDays or weekDay from scheduleDetails
+        // Clean scheduleDetails
         let cleanedScheduleDetails = null;
         if (session.scheduleDetails) {
           const { weeklyDays, weekDay, ...rest } = session.scheduleDetails;
@@ -415,5 +505,5 @@ module.exports = {
   getUpcomingSessions,
   getAllSessionByDate,
   getSessionsWithAttendance,
-  
+
 };
