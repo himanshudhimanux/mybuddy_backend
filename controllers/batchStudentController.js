@@ -1,6 +1,7 @@
 const BatchStudent = require('../models/BatchStudentSchema');
 const Batch = require('../models/BatchSchema'); 
 const Course = require('../models/Course');
+const CourseBatchMap = require("../models/CourseBatchMap")
 
 
 const createBatchStudent = async (req, res) => {
@@ -15,31 +16,45 @@ const createBatchStudent = async (req, res) => {
             status,
         } = req.body;
 
+
+        console.log("Incoming request body:", req.body);
+
         // Check for missing fields
         if (!studentId || !batchId || !payableFees || !installmentType || !numberOfInstallments) {
             return res.status(400).json({ message: 'All required fields must be provided.' });
         }
 
+        // Check if student already exists in the batch
         const existingStudent = await BatchStudent.findOne({ studentId, batchId });
         if (existingStudent) {
             return res.status(400).json({ message: 'Student already added to this batch' });
         }
 
+        // Check if batch exists
         const batch = await Batch.findById(batchId);
         if (!batch) {
             return res.status(404).json({ message: 'Batch not found' });
         }
 
-        const courses = await Course.find({ '_id': { $in: batch.courseIds } });
-        if (!courses || courses.length === 0) {
+        // ✅ Fetch mapped courses for the batch from CourseBatchMap
+        const courseMappings = await CourseBatchMap.find({ batchId }).populate('courseId');
+        if (!courseMappings || courseMappings.length === 0) {
             return res.status(400).json({ message: 'No courses found for this batch.' });
         }
 
-        const totalCourseFees = courses.reduce((total, course) => total + course.courseFee, 0);
+        // Extract course documents from mappings
+        const courses = courseMappings.map(mapping => mapping.courseId);
 
+        // ✅ Calculate total course fees
+        const totalCourseFees = courses.reduce((total, course) => {
+            return total + Number(course.courseFee || 0);
+        }, 0);
+
+        // Get last student roll number and increment
         const lastStudent = await BatchStudent.find({ batchId }).sort({ studentRollNo: -1 }).limit(1);
         const studentRollNo = lastStudent.length > 0 ? lastStudent[0].studentRollNo + 1 : 1;
 
+        // Create new batch student document
         const batchStudent = new BatchStudent({
             studentId,
             studentRollNo,
@@ -55,12 +70,14 @@ const createBatchStudent = async (req, res) => {
         });
 
         await batchStudent.save();
+
         res.status(201).json({ message: 'Batch student created successfully', batchStudent });
     } catch (error) {
         console.error('Error creating batch student:', error);
         res.status(500).json({ message: 'Error creating batch student', error });
     }
 };
+
 
 
 // Get All Batch Students

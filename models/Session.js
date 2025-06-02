@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const sessionSchema = new mongoose.Schema({
-  batchClassId: {
+  batchId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'BatchClass',
+    ref: 'Batch',
     required: true,
   },
   batchDate: {
@@ -52,7 +52,7 @@ const sessionSchema = new mongoose.Schema({
   },
   roomNo: {
     type: String,
-    default: '', // Optional: you can make it required if needed
+    default: '0', // Optional: you can make it required if needed
   },
   absentNotification: {
     type: Boolean,
