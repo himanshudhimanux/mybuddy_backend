@@ -152,8 +152,6 @@ exports.submitFee = async (req, res) => {
 };
 
 
-
-
 exports.getStudentFeeHistory = async (req, res) => {
 
   const { studentId } = req.params;

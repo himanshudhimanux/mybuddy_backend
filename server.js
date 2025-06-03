@@ -24,7 +24,8 @@ const testTypesRoutes = require("./routes/testTypesRoutes");
 const testScheduleRoutes = require("./routes/testScheduleRoutes");
 const testMarksRoutes = require("./routes/testMarksRoutes");
 const studentPunchRoutes = require("./routes/studentPunchRoutes");
-const courseBatchMapRoutes = require("./routes/courseBatchMapRoutes")
+const courseBatchMapRoutes = require("./routes/courseBatchMapRoutes");
+const studentDetailsRoutes = require("./routes/studentDetailsRoutes");
 
 
 const path = require('path');
@@ -73,6 +74,7 @@ app.use("/api", testScheduleRoutes)
 app.use("/api", testMarksRoutes);
 app.use("/api", studentPunchRoutes);
 app.use("/api", courseBatchMapRoutes)
+app.use("/api", studentDetailsRoutes)
 
 // ========= Routes end=============
 
