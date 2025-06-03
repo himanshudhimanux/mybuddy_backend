@@ -291,7 +291,7 @@ const getTodayStudentInfo = async (req, res) => {
       status: 'Active',
       classType: { $in: ['Regular', 'Revision', 'Guest Lecture', 'Other'] }
     })
-      .populate('subjectId teacherId batchClassId');
+      .populate('subjectId teacherId batchId');
 
     // Get today tests
     const todayTests = await TestSchedule.find({
