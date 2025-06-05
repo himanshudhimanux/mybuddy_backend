@@ -6,7 +6,8 @@ const {
   getSmsDetails,
   createSmsDetail,
   getStudentDocuments,
-  createStudentDocument
+  createStudentDocument,
+  getStudentAttendanceFromMachine
 } = require('../controllers/studentDetailsController');
 
 // 📦 Purchase Details
@@ -20,5 +21,9 @@ router.get('/student/sms-details/:studentId', getSmsDetails);
 // 📄 Student Documents
 router.get('/student/documents/:studentId', getStudentDocuments);
 // router.post('/student/documents', createStudentDocument); // future use
+
+
+// 🕒 Student Attendance from Biometric Machine
+router.get('/student/biometric-attendance/:studentId', getStudentAttendanceFromMachine); 
 
 module.exports = router;

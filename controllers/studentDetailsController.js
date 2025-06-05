@@ -58,3 +58,45 @@ exports.getStudentDocuments = async (req, res) => {
     ]
   });
 };
+
+
+// -------- ATTENDANCE FROM MACHINE (with optional date filter) --------
+exports.getStudentAttendanceFromMachine = async (req, res) => {
+  const { studentId } = req.params;
+  const { date } = req.query;
+
+  // Dummy data
+  const attendanceRecords = [
+    {
+      date: "2025-06-04",
+      status: "Present",
+      time: "09:03 AM",
+      machineId: "MCH001",
+      userId: studentId
+    },
+    {
+      date: "2025-06-03",
+      status: "Absent",
+      time: null,
+      machineId: "MCH001",
+      userId: studentId
+    },
+    {
+      date: "2025-06-02",
+      status: "Present",
+      time: "08:57 AM",
+      machineId: "MCH001",
+      userId: studentId
+    }
+  ];
+
+  // Agar date query param hai to filter karo
+  const filteredData = date
+    ? attendanceRecords.filter(record => record.date === date)
+    : attendanceRecords;
+
+  return res.json({
+    success: true,
+    data: filteredData
+  });
+};
