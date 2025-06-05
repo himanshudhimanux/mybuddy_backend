@@ -1,55 +1,60 @@
+// -------- PURCHASE DETAILS --------
 exports.getPurchaseDetails = async (req, res) => {
   const { studentId } = req.params;
 
-  // Future: Fetch purchase data from DB
   return res.json({
     success: true,
-    data: [] // Example structure below for future:
-    /*
-    [
+    data: [
       {
-        purchaseId: "PUR123",
-        itemName: "Course Material",
-        price: 500
+        purchaseId: "PUR001",
+        itemName: "Advanced Math Course",
+        price: 999
+      },
+      {
+        purchaseId: "PUR002",
+        itemName: "Science Material",
+        price: 499
       }
     ]
-    */
   });
 };
 
+// -------- SMS DETAILS --------
 exports.getSmsDetails = async (req, res) => {
   const { studentId } = req.params;
 
-  // Future: Fetch SMS logs
   return res.json({
     success: true,
-    data: [] // Example structure:
-    /*
-    [
+    data: [
       {
-        smsId: "SMS123",
-        content: "Your class starts at 10AM tomorrow."
+        smsId: "SMS001",
+        content: "Your test is scheduled at 3PM today."
+      },
+      {
+        smsId: "SMS002",
+        content: "Please submit your assignment by tomorrow."
       }
     ]
-    */
   });
 };
 
+// -------- STUDENT DOCUMENTS --------
 exports.getStudentDocuments = async (req, res) => {
   const { studentId } = req.params;
 
-  // Future: Fetch student documents
   return res.json({
     success: true,
-    data: [] // Example structure:
-    /*
-    [
+    data: [
       {
-        docId: "DOC123",
+        docId: "DOC001",
         name: "Aadhar Card",
-        downloadUrl: "https://example.com/docs/aadhar123.pdf"
+        downloadUrl: "https://example.com/docs/aadhar001.pdf"
+      },
+      {
+        docId: "DOC002",
+        name: "10th Marksheet",
+        downloadUrl: "https://example.com/docs/marksheet10.pdf"
       }
     ]
-    */
   });
 };
