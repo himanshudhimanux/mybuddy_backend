@@ -70,34 +70,6 @@ exports.getMarksByStudentAndTestId = async (req, res) => {
 };
 
 
-// get student for add marks
-// exports.getStudentsByTestSchedule = async (req, res) => {
-//   try {
-//     const { scheduleId } = req.params;
-
-//     // Get test schedule
-//     const test = await TestSchedule.findById(scheduleId);
-//     if (!test) {
-//       return res.status(404).json({ message: 'Test not found' });
-//     }
-
-//     // Filter CourseStudent records
-//     const courseStudents = await CourseStudent.find({
-//       courseId: test.courseId,
-//       subjectIds: test.subjectId,
-//       status: 'Attending', // only currently attending students
-//     }).populate('studentId');
-
-//     // Extract student details
-//     const students = courseStudents.map(cs => cs.studentId);
-
-//     res.status(200).json(students);
-//   } catch (err) {
-//     console.error('Error fetching students:', err);
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// };
-
 
 // get student for add marks
 exports.getStudentsByCourseAndSubject = async (req, res) => {

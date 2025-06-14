@@ -90,13 +90,20 @@ exports.getStudentAttendanceFromMachine = async (req, res) => {
     }
   ];
 
-  // Agar date query param hai to filter karo
+  // Filter by date if provided
   const filteredData = date
     ? attendanceRecords.filter(record => record.date === date)
     : attendanceRecords;
 
+  // Count Present and Absent
+  const presentCount = filteredData.filter(r => r.status === "Present").length;
+  const absentCount = filteredData.filter(r => r.status === "Absent").length;
+
   return res.json({
     success: true,
-    data: filteredData
+    data: filteredData,
+    presentCount,
+    absentCount
   });
 };
+
