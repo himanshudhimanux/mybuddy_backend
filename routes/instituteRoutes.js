@@ -4,10 +4,15 @@ const { registerInsitute, getAllInstitutes, specificInstitute, updateInstitute, 
 const router = express.Router();
 
 router.post('/institute', upload.single('logo'), verifyToken, roleCheck('admin'), registerInsitute);
+
 router.get('/institutes', verifyToken, roleCheck('admin'), getAllInstitutes);
+
 router.get('/institute/:id', verifyToken, roleCheck('admin'), specificInstitute);
+
 router.put('/institute/:id', verifyToken, roleCheck('admin'), updateInstitute);
-router.delete('/institute/:id', verifyToken, roleCheck('admin'), deleteInstitute);
+
+router.delete('/institute/:id', roleCheck('admin'), deleteInstitute);
+
 router.get('/institutes', verifyToken, roleCheck('admin'), searchInstitute);
 
 
