@@ -18,6 +18,15 @@ const teacherRegister = async (req, res) => {
   try {
     const { name, subject, address, phone, gender } = req.body;
 
+    // ✅ Check if subject already assigned
+    const existingTeacher = await Teacher.findOne({ subject });
+    if (existingTeacher) {
+      return res.status(400).json({
+        success: false,
+        message: "This subject is already assigned to another teacher.",
+      });
+    }
+
     const teacher = new Teacher({
       name,
       subject,
@@ -28,6 +37,7 @@ const teacherRegister = async (req, res) => {
     });
 
     await teacher.save();
+
     res.status(201).json({
       success: true,
       message: "Teacher registered successfully",
@@ -42,6 +52,7 @@ const teacherRegister = async (req, res) => {
     });
   }
 };
+
 
 // GET: All Teachers (No pagination or search)
 const getAllTeachers = async (req, res) => {
