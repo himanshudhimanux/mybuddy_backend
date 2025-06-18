@@ -57,7 +57,10 @@ const teacherRegister = async (req, res) => {
 // GET: All Teachers (No pagination or search)
 const getAllTeachers = async (req, res) => {
   try {
-    const teachers = await Teacher.find().sort({ createdAt: -1 });
+    const teachers = await Teacher.find()
+      .populate('subject', 'name') // 👈 Only bring subject name
+      .sort({ createdAt: -1 });
+
     res.json({
       success: true,
       message: "All teachers fetched successfully",
@@ -71,6 +74,7 @@ const getAllTeachers = async (req, res) => {
     });
   }
 };
+
 
 // GET: Specific Teacher by ID
 const specificTeacher = async (req, res) => {
