@@ -15,9 +15,9 @@ router.get('/fetch-students', verifyToken, getStudentsByFatherPhone);
 // Switch Student Profile
 router.post('/switch-profile', verifyToken, switchStudentProfile);
 
-router.put("/:id", studentPicUpload, updateStudent); // Update a specific student
+router.put("/update/student/:id", studentPicUpload, updateStudent); // Update a specific student
 
-router.delete("/:id", deleteStudent); // Delete a specific student
+router.delete("/delete/student/:id", deleteStudent); // Delete a specific student
 
 router.get("/student-today-data/:studentId", verifyToken, getTodayStudentInfo )
 
