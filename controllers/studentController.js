@@ -29,6 +29,12 @@ const generateRegistrationNumber = async () => {
 };
 
 
+const generateStudentId = async () => {
+    const lastStudent = await Student.findOne().sort({ studentId: -1 }).select('studentId');
+    return lastStudent ? lastStudent.studentId + 1 : 1;
+};
+
+
 // Configure multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -56,16 +62,15 @@ const studentRegister = async (req, res) => {
             email,
         } = req.body;
 
-        // Validation for required fields
         if (!name || !fatherName || !motherName || !address || !dob || !gender || !fatherPhone) {
             return res.status(400).json({ message: "All mandatory fields are required" });
         }
 
-        // Generate registration number
         const registrationNumber = await generateRegistrationNumber();
+        const studentId = await generateStudentId(); // 🔁 Generate studentId
 
-        // Create a new student object
         const newStudent = new Student({
+            studentId, // 👈 Insert auto-incremented ID
             registrationNumber,
             name,
             fatherName,
@@ -80,7 +85,6 @@ const studentRegister = async (req, res) => {
             photo: req.file ? `/uploads/${req.file.filename}` : undefined,
         });
 
-        // Save to the database
         await newStudent.save();
         res.status(201).json({ message: "Student registered successfully", student: newStudent });
     } catch (error) {
@@ -88,6 +92,7 @@ const studentRegister = async (req, res) => {
         res.status(500).json({ message: "Server error: Unable to add student" });
     }
 };
+
 
 
 // GET: All Students with Pagination
