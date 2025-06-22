@@ -284,6 +284,67 @@ const getSessionsWithAttendance = async (req, res) => {
   }
 };
 
+    
+const getAllSessionByDate = async (req, res) => {
+  try {
+    const { courseId, date } = req.query;
+
+    console.log("Requested date:", date);
+    console.log("Requested courseId:", courseId);
+
+    if (!date || !courseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'courseId और date दोनों required हैं',
+        data: []
+      });
+    }
+
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(selectedDate.getDate() + 1);
+
+    // Step 1: Find batchIds for this course from CourseBatchMap
+    const courseBatchMaps = await CourseBatchMap.find({ courseId }, 'batchId');
+    const batchIds = courseBatchMaps.map(map => map.batchId);
+
+    if (batchIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No batches mapped with this course.',
+        data: []
+      });
+    }
+
+    // Step 2: Find sessions on this date for those batchIds
+    const sessions = await Session.find({
+      batchId: { $in: batchIds },
+      batchDate: { $gte: selectedDate, $lt: nextDate }
+    })
+      .populate('batchId')
+      .populate('subjectId')
+      .populate('teacherId');
+
+    return res.status(200).json({
+      success: true,
+      message: sessions.length > 0
+        ? 'Sessions successfully fetched.'
+        : 'No sessions found for selected course and date.',
+      data: sessions
+    });
+
+  } catch (error) {
+    console.error('Error fetching sessions:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching sessions.',
+      error: error.message,
+      data: []
+    });
+  }
+};
 
 
 module.exports = {
@@ -294,4 +355,5 @@ module.exports = {
   deleteSession,
   getSessionsByType,
   getSessionsWithAttendance,
+  getAllSessionByDate
 };

@@ -6,10 +6,15 @@ const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
 
 // Create session
 router.post('/create-session', verifyToken, roleCheck('admin'), createSession);
+
 router.get("/sessions", verifyToken, roleCheck('admin'),  getSessions);
+
 router.get("/sessions/:id", verifyToken, roleCheck('admin'), getSessionById);
+
 router.put("/sessions/:id",  verifyToken, roleCheck('admin'), updateSession);
+
 router.delete("/sessions/:id", verifyToken, roleCheck('admin'), deleteSession);
+
 router.get("/sessions/type/:type", verifyToken, roleCheck('admin'), getSessionsByType);
 
 
@@ -20,6 +25,6 @@ router.get('/sessions-attendance/:studentId', verifyToken, getSessionsWithAttend
 // router.get("/upcoming-classess", verifyToken,  getUpcomingSessions);
 
 
-// router.get('/getallsessions/by-date', getAllSessionByDate);
+router.get('/getallsessions/by-date', getAllSessionByDate);
 
 module.exports = router;
