@@ -31,8 +31,15 @@ exports.getMarksByStudentId = async (req, res) => {
     const { studentId } = req.params;
 
     const marks = await TestMarks.find({ student_id: studentId })
-      .populate("test_id")
-      .populate("student_id");
+      .populate("student_id") // populate student data
+      .populate({
+        path: "test_id",
+        populate: [
+          { path: "courseId", select: "name" },
+          { path: "subjectId", select: "name" },
+          { path: "testTypeId", select: "testType" }
+        ]
+      });
 
     if (!marks || marks.length === 0) {
       return res.status(200).json({ success: false, message: "No marks found for this student" });
@@ -44,6 +51,7 @@ exports.getMarksByStudentId = async (req, res) => {
     return res.status(500).json({ success: false, message: "Error fetching marks", error: error.message });
   }
 };
+
 
 
 // Get marks by student ID and test ID
