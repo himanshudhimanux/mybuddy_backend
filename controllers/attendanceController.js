@@ -10,6 +10,16 @@ const createAttendance = async (req, res) => {
     try {
         const { sessionId, studentId, attendanceDate, attendanceTime, attendanceSource, attendanceType, notificationSent } = req.body;
 
+console.log("Attendance Data:", {
+  sessionId,
+  studentId,
+  attendanceDate,
+  attendanceTime,
+  attendanceSource,
+  attendanceType,
+  notificationSent
+});
+
         // Check if the student is part of the batch associated with this session
         // Check if the student is part of the batch
         const isStudentInBatch = await BatchStudent.findOne({
@@ -200,6 +210,58 @@ const getAttendanceSummary = async (req, res) => {
     }
 };
 
+const getAttendanceByStudentId = async (req, res) => {
+  const { studentId } = req.params;
+  const { date } = req.query; // expected format: YYYY-MM-DD
+
+  try {
+    let query = { studentId };
+
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999); // end of the day
+      query.attendanceDate = { $gte: start, $lte: end };
+    }
+
+    const records = await Attendance.find(query)
+      .populate('sessionId')
+      .sort({ attendanceDate: -1 });
+
+    if (!records || records.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No attendance records found.",
+        data: [],
+      });
+    }
+
+    const formatted = records.map((att) => ({
+      _id: att._id,
+      session: att.sessionId,
+      attendanceDate: att.attendanceDate,
+      attendanceTime: att.attendanceTime,
+      attendanceType: att.attendanceType,
+      attendanceSource: att.attendanceSource,
+      createdAt: att.createdAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance fetched successfully.",
+      data: formatted,
+    });
+
+  } catch (error) {
+    console.error("Error fetching attendance:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch attendance records.",
+      error: error.message,
+    });
+  }
+};
+
 
 module.exports = {
     createAttendance,
@@ -208,5 +270,6 @@ module.exports = {
     updateAttendance,
     deleteAttendance,
     getAttendanceById,
-    getAttendanceSummary
+    getAttendanceSummary,
+    getAttendanceByStudentId
 };

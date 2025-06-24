@@ -5,6 +5,12 @@ const Fee = require('../models/FeeSchema');
 const FeeHistory = require('../models/FeeHistory');
 
 
+const generateAutoId = (prefix = '') => {
+  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+  const random = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+  return `${prefix}${timestamp}${random}`;
+};
+
 exports.submitFee = async (req, res) => {
   const {
     fee_id,
@@ -14,29 +20,32 @@ exports.submitFee = async (req, res) => {
     transaction_no,
     amount_received_by,
     comment,
-    // date removed from here
   } = req.body;
 
   try {
     const fee = await Fee.findById(fee_id);
     if (!fee) return res.status(404).json({ message: "Fee record not found" });
 
-    // FeeHistory create with automatic date
+    // Auto-generate if missing
+    const autoReferenceId = reference_id || generateAutoId("REF-");
+    const autoTransactionNo = transaction_no || generateAutoId("TXN-");
+
+    // Create FeeHistory
     const history = new FeeHistory({
       fees_id: fee._id,
       amount,
       mode_of_payment,
-      reference_id,
+      reference_id: autoReferenceId,
+      transaction_no: autoTransactionNo,
       status: "Paid",
-      transaction_no,
       amount_received_by,
       comment,
-      date: new Date(), // automatic current date
+      date: new Date(),
     });
 
     await history.save();
 
-    // Update fee record
+    // Update Fee
     fee.amount_paid += amount;
     fee.amount_pending = fee.amount_to_be_paid - fee.amount_paid;
 
