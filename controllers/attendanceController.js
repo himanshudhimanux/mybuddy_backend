@@ -210,9 +210,10 @@ const getAttendanceSummary = async (req, res) => {
     }
 };
 
+
 const getAttendanceByStudentId = async (req, res) => {
   const { studentId } = req.params;
-  const { date } = req.query; // expected format: YYYY-MM-DD
+  const { date } = req.query;
 
   try {
     let query = { studentId };
@@ -220,12 +221,18 @@ const getAttendanceByStudentId = async (req, res) => {
     if (date) {
       const start = new Date(date);
       const end = new Date(date);
-      end.setHours(23, 59, 59, 999); // end of the day
+      end.setHours(23, 59, 59, 999);
       query.attendanceDate = { $gte: start, $lte: end };
     }
 
     const records = await Attendance.find(query)
-      .populate('sessionId')
+      .populate({
+        path: 'sessionId',
+        populate: [
+          { path: 'subjectId', select: 'name' },
+          { path: 'teacherId', select: 'name' },
+        ],
+      })
       .sort({ attendanceDate: -1 });
 
     if (!records || records.length === 0) {
@@ -238,7 +245,11 @@ const getAttendanceByStudentId = async (req, res) => {
 
     const formatted = records.map((att) => ({
       _id: att._id,
-      session: att.sessionId,
+      session: {
+        ...att.sessionId._doc,
+        subjectName: att.sessionId.subjectId?.name || null,
+        teacherName: att.sessionId.teacherId?.name || null,
+      },
       attendanceDate: att.attendanceDate,
       attendanceTime: att.attendanceTime,
       attendanceType: att.attendanceType,
@@ -261,6 +272,8 @@ const getAttendanceByStudentId = async (req, res) => {
     });
   }
 };
+
+
 
 
 module.exports = {
