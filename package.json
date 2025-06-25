@@ -21,6 +21,7 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
+    "firebase-admin": "^13.4.0",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",

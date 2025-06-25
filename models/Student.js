@@ -15,6 +15,10 @@ const studentSchema = new mongoose.Schema({
     gender: { type: String, required: true },
     photo: { type: String, default: "https://via.placeholder.com/50" },
     email: { type: String },
+    fcmToken: {
+        type: String,
+        required: false,
+    }
 }, {
     timestamps: true
 });
