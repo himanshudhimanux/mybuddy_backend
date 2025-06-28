@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../../config/mybuddy-3073a-firebase-adminsdk-fbsvc-5f76455842.json');
+const serviceAccount = require('../mybuddy-3073a-firebase-adminsdk-fbsvc-5f76455842.json');
 
 
 admin.initializeApp({
