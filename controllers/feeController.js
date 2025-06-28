@@ -3,13 +3,71 @@ const Student = require('../models/Student');
 const CourseStudent = require('../models/CourseStudentSchema');
 const Fee = require('../models/FeeSchema');
 const FeeHistory = require('../models/FeeHistory');
-
+const sendNotification = require("../utils/sendNotification")
 
 const generateAutoId = (prefix = '') => {
   const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
   const random = Math.floor(1000 + Math.random() * 9000); // 4-digit random
   return `${prefix}${timestamp}${random}`;
 };
+
+
+// exports.submitFee = async (req, res) => {
+//   const {
+//     fee_id,
+//     amount,
+//     mode_of_payment,
+//     reference_id,
+//     transaction_no,
+//     amount_received_by,
+//     comment,
+//   } = req.body;
+
+//   try {
+//     const fee = await Fee.findById(fee_id);
+//     if (!fee) return res.status(404).json({ message: "Fee record not found" });
+
+//     // Auto-generate if missing
+//     const autoReferenceId = reference_id || generateAutoId("REF-");
+//     const autoTransactionNo = transaction_no || generateAutoId("TXN-");
+
+//     // Create FeeHistory
+//     const history = new FeeHistory({
+//       fees_id: fee._id,
+//       amount,
+//       mode_of_payment,
+//       reference_id: autoReferenceId,
+//       transaction_no: autoTransactionNo,
+//       status: "Paid",
+//       amount_received_by,
+//       comment,
+//       date: new Date(),
+//     });
+
+//     await history.save();
+
+//     // Update Fee
+//     fee.amount_paid += amount;
+//     fee.amount_pending = fee.amount_to_be_paid - fee.amount_paid;
+
+//     if (fee.amount_pending <= 0) {
+//       fee.status = "Fully-Paid";
+//       fee.amount_pending = 0;
+//     } else {
+//       fee.status = "Partial-Paid";
+//     }
+
+//     fee.update_datetime = new Date();
+//     await fee.save();
+
+//     res.json({ message: "Fee submitted successfully", fee, history });
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Fee submit failed" });
+//   }
+// };
+
 
 exports.submitFee = async (req, res) => {
   const {
@@ -30,7 +88,7 @@ exports.submitFee = async (req, res) => {
     const autoReferenceId = reference_id || generateAutoId("REF-");
     const autoTransactionNo = transaction_no || generateAutoId("TXN-");
 
-    // Create FeeHistory
+    // ✅ Create FeeHistory
     const history = new FeeHistory({
       fees_id: fee._id,
       amount,
@@ -45,7 +103,7 @@ exports.submitFee = async (req, res) => {
 
     await history.save();
 
-    // Update Fee
+    // ✅ Update Fee
     fee.amount_paid += amount;
     fee.amount_pending = fee.amount_to_be_paid - fee.amount_paid;
 
@@ -59,6 +117,19 @@ exports.submitFee = async (req, res) => {
     fee.update_datetime = new Date();
     await fee.save();
 
+    // ✅ Send Push Notification
+    const student = await Student.findById(fee.student_id);
+    if (student?.fcmToken) {
+      const title = "Fee Submitted";
+      const body = `₹${amount} has been received. Thank you!`;
+
+      await sendNotification(student.fcmToken, title, body, {
+        feeStatus: fee.status,
+        amountPaid: amount.toString(),
+        totalPaid: fee.amount_paid.toString()
+      });
+    }
+
     res.json({ message: "Fee submitted successfully", fee, history });
 
   } catch (error) {
@@ -66,6 +137,7 @@ exports.submitFee = async (req, res) => {
     res.status(500).json({ message: "Fee submit failed" });
   }
 };
+
 
 
 
