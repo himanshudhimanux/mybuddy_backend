@@ -4,6 +4,8 @@ const BatchStudent = require('../models/BatchStudentSchema');
 const Student = require('../models/Student');
 const Session = require('../models/Session');
 const mongoose = require('mongoose');
+const admin = require('./fcm');
+const sendNotification = require('../utils/sendNotification');
 
 // Create Attendance
 const createAttendance = async (req, res) => {
@@ -53,6 +55,81 @@ console.log("Attendance Data:", {
         res.status(500).json({ message: 'Error creating attendance', error });
     }
 };
+
+const createBulkAttendance = async (req, res) => {
+  try {
+    const { attendances } = req.body; // Array of attendance objects
+
+    if (!Array.isArray(attendances) || attendances.length === 0) {
+      return res.status(400).json({ message: 'Attendance list is required' });
+    }
+
+    const savedAttendances = [];
+
+    for (const attendanceData of attendances) {
+      const {
+        sessionId,
+        studentId,
+        attendanceDate,
+        attendanceTime,
+        attendanceSource,
+        attendanceType,
+        notificationSent
+      } = attendanceData;
+
+      const isStudentInBatch = await BatchStudent.findOne({
+        studentId: new mongoose.Types.ObjectId(studentId)
+      });
+
+      if (!isStudentInBatch) {
+        console.log(`Student not in batch: ${studentId}`);
+        continue;
+      }
+
+      const attendance = new Attendance({
+        sessionId,
+        studentId,
+        attendanceDate,
+        attendanceTime,
+        attendanceSource,
+        attendanceType,
+        notificationSent,
+        createdBy: req.user.userId,
+      });
+
+      await attendance.save();
+      savedAttendances.push(attendance);
+
+      // 🔔 Send notification to student’s FCM token
+      const student = await Student.findById(studentId);
+      if (student && student.fcmToken) {
+        const title = 'Attendance Marked';
+        const body = `Your attendance has been marked as ${attendanceType}`;
+        await sendNotification(student.fcmToken, title, body, {
+          studentId,
+          sessionId
+        });
+      }
+    }
+
+    res.status(201).json({
+      message: 'Attendance marked successfully for multiple students',
+      attendances: savedAttendances
+    });
+
+  } catch (error) {
+    console.error('Error creating bulk attendance:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+
+
+
+
+
+
 
 // Get All Attendance Records with Filters & Pagination
 const getAttendanceRecords = async (req, res) => {
@@ -284,5 +361,6 @@ module.exports = {
     deleteAttendance,
     getAttendanceById,
     getAttendanceSummary,
-    getAttendanceByStudentId
+    getAttendanceByStudentId,
+    createBulkAttendance
 };

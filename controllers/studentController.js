@@ -299,10 +299,6 @@ const getStudentsByFatherPhone = async (req, res) => {
   }
 };
 
-module.exports = getStudentsByFatherPhone;
-
-
-
 // ✅ 2. Switch Student Profile
 const switchStudentProfile = async (req, res) => {
     try {
