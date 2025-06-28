@@ -4,7 +4,6 @@ const BatchStudent = require('../models/BatchStudentSchema');
 const Student = require('../models/Student');
 const Session = require('../models/Session');
 const mongoose = require('mongoose');
-const admin = require('./fcm');
 const sendNotification = require('../utils/sendNotification');
 
 // Create Attendance
