@@ -221,33 +221,86 @@ const deleteStudent = async (req, res) => {
 
 
 // ✅ 1. Get students by fatherPhone
-const getStudentsByFatherPhone = async (req, res) => {
-    try {
+// const getStudentsByFatherPhone = async (req, res) => {
+//     try {
         
-        const { fatherPhone } = req.query;
+//         const { fatherPhone } = req.query;
 
-        if (!fatherPhone) {
-            return res.status(400).json({ success: false, message: "Father phone number is required" });
-        }
+//         if (!fatherPhone) {
+//             return res.status(400).json({ success: false, message: "Father phone number is required" });
+//         }
 
-        const phoneNumber = Number(fatherPhone);
-        const students = await Student.find({ fatherPhone: phoneNumber });
+//         const phoneNumber = Number(fatherPhone);
+//         const students = await Student.find({ fatherPhone: phoneNumber });
 
-        if (!students.length) {
-            return res.status(404).json({ success: false, message: "No students found for this phone number" });
-        }
+//         if (!students.length) {
+//             return res.status(404).json({ success: false, message: "No students found for this phone number" });
+//         }
 
-        return res.status(200).json({
-            success: true,
-            message: "Students fetched successfully",
-            students,
-        });
+//         return res.status(200).json({
+//             success: true,
+//             message: "Students fetched successfully",
+//             students,
+//         });
 
-    } catch (error) {
-        console.error("Error fetching students:", error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+//     } catch (error) {
+//         console.error("Error fetching students:", error);
+//         return res.status(500).json({ success: false, message: "Internal server error" });
+//     }
+// };
+
+
+const Student = require('../models/Student'); // import your model
+
+const getStudentsByFatherPhone = async (req, res) => {
+  try {
+    const { fatherPhone, fcmToken } = req.query;
+
+    // ✅ Check if fatherPhone is missing
+    if (!fatherPhone) {
+      return res.status(400).json({
+        success: false,
+        message: "Father phone number is required"
+      });
     }
+
+    const phoneNumber = Number(fatherPhone);
+    const students = await Student.find({ fatherPhone: phoneNumber });
+
+    // ✅ If no student found
+    if (!students.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No students found for this phone number"
+      });
+    }
+
+    // ✅ If fcmToken is provided and non-empty, save it
+    if (fcmToken && fcmToken.trim() !== "") {
+      await Student.updateOne(
+        { _id: students[0]._id }, // or loop if multiple students need it
+        { $set: { fcmToken: fcmToken.trim() } }
+      );
+    }
+
+    // ✅ Send response
+    return res.status(200).json({
+      success: true,
+      message: "Students fetched successfully",
+      students
+    });
+
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
 };
+
+module.exports = getStudentsByFatherPhone;
+
 
 
 // ✅ 2. Switch Student Profile
