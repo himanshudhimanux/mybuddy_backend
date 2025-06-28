@@ -28,12 +28,13 @@ const createSubject = async (req, res) => {
 // Get All Subjects
 const getSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find().populate('FacultyId');
+    const subjects = await Subject.find(); // ✅ populate removed
     res.status(200).json(subjects);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Update Subject
 const updateSubject = async (req, res) => {
