@@ -249,9 +249,6 @@ const deleteStudent = async (req, res) => {
 //     }
 // };
 
-
-const Student = require('../models/Student'); // import your model
-
 const getStudentsByFatherPhone = async (req, res) => {
   try {
     const { fatherPhone, fcmToken } = req.query;
