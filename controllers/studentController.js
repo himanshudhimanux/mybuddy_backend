@@ -3,11 +3,14 @@ const multer = require("multer");
 const Student = require("../models/Student");
 const Session = require('../models/Session');
 const TestSchedule = require('../models/TestSchedule');
+const Course = require("../models/Course")
 const StudentPunch = require('../models/StudnetPunch');
+const CourseBatchMap = require("../models/CourseBatchMap")
 const Attendance = require('../models/AttendanceSchema');
 const TestMarks = require('../models/TestMarks');
 const CourseStudent = require('../models/CourseStudentSchema');
 const moment = require('moment');
+
 
 // Function to generate registration numbers
 const generateRegistrationNumber = async () => {
@@ -328,34 +331,114 @@ const switchStudentProfile = async (req, res) => {
     }
 };
 
+// const getTodayStudentInfo = async (req, res) => {
+//   try {
+//     const { studentId } = req.params;
+
+//     if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+//       return res.status(400).json({ success: false, message: 'Invalid studentId' });
+//     }
+
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
+//     const tomorrow = new Date(today);
+//     tomorrow.setDate(tomorrow.getDate() + 1);
+
+//     // Get today sessions (Regular class)
+//     const todaySessions = await Session.find({
+//       batchDate: { $gte: today, $lt: tomorrow },
+//       status: 'Active',
+//       classType: { $in: ['Regular', 'Revision', 'Guest Lecture', 'Other'] }
+//     })
+//       .populate('subjectId teacherId batchId');
+
+//     // Get today tests
+//     const todayTests = await TestSchedule.find({
+//       testDate: { $gte: today, $lt: tomorrow },
+//       status: 'Active'
+//     })
+//       .populate('subjectId testTypeId courseId');
+
+//     // Get today's punch times for the student
+//     const punches = await StudentPunch.find({
+//       studentId,
+//       punchTime: { $gte: today, $lt: tomorrow }
+//     }).sort({ punchTime: 1 });
+
+//     const punchIn = punches.find(p => p.type === 'IN');
+//     const punchOut = punches.reverse().find(p => p.type === 'OUT');
+
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Student today data fetched successfully',
+//       data: {
+//         sessions: todaySessions,
+//         tests: todayTests,
+//         punchInTime: punchIn ? punchIn.punchTime : null,
+//         punchOutTime: punchOut ? punchOut.punchTime : null
+//       }
+//     });
+//   } catch (err) {
+//     console.error('Error:', err);
+//     return res.status(500).json({ success: false, message: 'Internal server error' });
+//   }
+// };
+
+
+// Search student by registrationNumber OR name OR fatherName
+
+
 const getTodayStudentInfo = async (req, res) => {
   try {
     const { studentId } = req.params;
+
     if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
       return res.status(400).json({ success: false, message: 'Invalid studentId' });
     }
 
+    // ✅ Step 1: Check CourseStudent entry
+    const courseStudent = await CourseStudent.findOne({ studentId });
+
+    if (!courseStudent) {
+      return res.status(404).json({ success: false, message: 'CourseStudent mapping not found for student' });
+    }
+
+    const courseId = courseStudent.courseId;
+    const subjectIds = courseStudent.subjectIds || [];
+
+    // ✅ Step 2: Get batchId from CourseBatchMap
+    const courseMap = await CourseBatchMap.findOne({ courseId });
+
+    if (!courseMap || !courseMap.batchId) {
+      return res.status(404).json({ success: false, message: 'Batch mapping not found for course' });
+    }
+
+    const batchId = courseMap.batchId;
+
+    // ✅ Step 3: Set today & tomorrow range
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Get today sessions (Regular class)
+    // ✅ Step 4: Fetch today's sessions
     const todaySessions = await Session.find({
       batchDate: { $gte: today, $lt: tomorrow },
       status: 'Active',
+      batchId: batchId,
+      subjectId: { $in: subjectIds },
       classType: { $in: ['Regular', 'Revision', 'Guest Lecture', 'Other'] }
-    })
-      .populate('subjectId teacherId batchId');
+    }).populate('subjectId teacherId batchId');
 
-    // Get today tests
+    // ✅ Step 5: Fetch today's tests
     const todayTests = await TestSchedule.find({
       testDate: { $gte: today, $lt: tomorrow },
-      status: 'Active'
-    })
-      .populate('subjectId testTypeId courseId');
+      status: 'Active',
+      courseId: courseId,
+      subjectId: { $in: subjectIds }
+    }).populate('subjectId testTypeId courseId');
 
-    // Get today's punch times for the student
+    // ✅ Step 6: Fetch student punch times
     const punches = await StudentPunch.find({
       studentId,
       punchTime: { $gte: today, $lt: tomorrow }
@@ -374,6 +457,7 @@ const getTodayStudentInfo = async (req, res) => {
         punchOutTime: punchOut ? punchOut.punchTime : null
       }
     });
+
   } catch (err) {
     console.error('Error:', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
@@ -381,7 +465,8 @@ const getTodayStudentInfo = async (req, res) => {
 };
 
 
-// Search student by registrationNumber OR name OR fatherName
+
+
 const searchStudentPerformance =  async (req, res) => {
     try {
         const { query } = req.query;
