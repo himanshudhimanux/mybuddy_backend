@@ -1,16 +1,29 @@
 const Subject = require('../models/Subject');
 
 // Create Subject
+// const createSubject = async (req, res) => {
+//   try {
+//     const { name, subjecttype, subjectFee, FacultyId } = req.body;
+//     const subject = new Subject({ name, subjecttype, FacultyId, subjectFee });
+//     await subject.save();
+//     res.status(201).json({ message: 'Subject created successfully', subject });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const createSubject = async (req, res) => {
   try {
-    const { name, subjecttype, subjectFee, FacultyId } = req.body;
-    const subject = new Subject({ name, subjecttype, FacultyId, subjectFee });
+    const { name, subjecttype, subjectFee } = req.body;
+    const subject = new Subject({ name, subjecttype, subjectFee });
     await subject.save();
     res.status(201).json({ message: 'Subject created successfully', subject });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
 // Get All Subjects
 const getSubjects = async (req, res) => {
