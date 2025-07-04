@@ -376,25 +376,104 @@ exports.getAllPastTestsForAdmin  = async (req, res) => {
 };
 
 
+// exports.getTestsByType = async (req, res) => {
+//   try {
+//     const { testType, startDate, endDate, courseId } = req.query;
+
+//     // ✅ Validate required parameters (studentId removed)
+//     if (
+//       !testType ||
+//       !['upcoming', 'active', 'past'].includes(testType) ||
+//       !startDate ||
+//       !endDate ||
+//       !courseId
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Missing or invalid testType, startDate, endDate, or courseId',
+//         data: null,
+//         error: 'ValidationError',
+//       });
+//     }
+
+//     const start = moment.utc(startDate).startOf('day').toDate();
+//     const end = moment.utc(endDate).endOf('day').toDate();
+//     const todayStart = moment().startOf('day').toDate();
+//     const todayEnd = moment().endOf('day').toDate();
+
+//     // ✅ Base query
+//     const query = {
+//       status: 'Active',
+//       courseId,
+//     };
+
+//     // ✅ Date condition based on testType
+//     if (testType === 'upcoming') {
+//       query.testDate = { $gt: todayEnd, $lte: end };
+//     } else if (testType === 'active') {
+//       query.testDate = { $gte: todayStart, $lte: todayEnd };
+//     } else if (testType === 'past') {
+//       query.testDate = { $lt: todayStart, $gte: start };
+//     }
+
+//     const tests = await TestSchedule.find(query)
+//       .sort({ testDate: 1 })
+//       .populate('courseId testTypeId subjectId');
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `Tests fetched successfully (${testType})`,
+//       data: tests,
+//       error: null,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching tests:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Internal server error while fetching tests',
+//       data: null,
+//       error: error.message || error,
+//     });
+//   }
+// };
+
+
+const CourseStudent = require('../models/CourseStudent');
+
 exports.getTestsByType = async (req, res) => {
   try {
-    const { testType, startDate, endDate, courseId } = req.query;
+    const { testType, startDate, endDate, courseId, studentId } = req.query;
 
-    // ✅ Validate required parameters (studentId removed)
+    // ✅ Validate required parameters
     if (
       !testType ||
       !['upcoming', 'active', 'past'].includes(testType) ||
       !startDate ||
       !endDate ||
-      !courseId
+      !courseId ||
+      !studentId
     ) {
       return res.status(400).json({
         success: false,
-        message: 'Missing or invalid testType, startDate, endDate, or courseId',
+        message: 'Missing or invalid testType, startDate, endDate, courseId or studentId',
         data: null,
         error: 'ValidationError',
       });
     }
+
+    // ✅ Get student's subjects from CourseStudent
+    const courseStudent = await CourseStudent.findOne({ studentId, courseId }).lean();
+
+    if (!courseStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student is not enrolled in the specified course',
+        data: null,
+        error: 'NotFound',
+      });
+    }
+
+    const subjectIds = courseStudent.subjectIds.map(id => id.toString());
 
     const start = moment.utc(startDate).startOf('day').toDate();
     const end = moment.utc(endDate).endOf('day').toDate();
@@ -405,9 +484,10 @@ exports.getTestsByType = async (req, res) => {
     const query = {
       status: 'Active',
       courseId,
+      subjectId: { $in: subjectIds }, // ✅ Filter by student’s subjects
     };
 
-    // ✅ Date condition based on testType
+    // ✅ Date condition
     if (testType === 'upcoming') {
       query.testDate = { $gt: todayEnd, $lte: end };
     } else if (testType === 'active') {
