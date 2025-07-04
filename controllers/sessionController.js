@@ -5,6 +5,7 @@ const Subject = require('../models/Subject');
 const Attendance = require('../models/AttendanceSchema');
 const BatchStudent = require('../models/BatchStudentSchema');
 const CourseBatchMap = require("../models/CourseBatchMap")
+const CourseStudent = require("../models/CourseStudentSchema");
 
 // Create Session
 const createSession = async (req, res) => {
