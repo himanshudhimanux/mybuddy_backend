@@ -98,19 +98,19 @@ const studentRegister = async (req, res) => {
 
 
 
-// GET: All Students with Pagination
+// GET: All Students without Pagination
 const getAllStudent = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search = "", filter = {} } = req.query;
+        const { search = "", filter = {} } = req.query;
 
         // Build the query for filtering and searching
         const query = {
             $and: [
-                filter, // Apply additional filters, e.g., { gender: "male" }
+                filter, // Example: { gender: "male" }
                 {
                     $or: [
                         { registrationNumber: { $regex: search, $options: "i" } },
-                        { name: { $regex: search, $options: "i" } }, // Case-insensitive search
+                        { name: { $regex: search, $options: "i" } },
                         { email: { $regex: search, $options: "i" } },
                         { phone: { $regex: search, $options: "i" } }
                     ]
@@ -118,22 +118,21 @@ const getAllStudent = async (req, res) => {
             ]
         };
 
-        const students = await Student.find(query)
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-
-        const count = await Student.countDocuments(query);
+        const students = await Student.find(query).exec();
 
         res.json({
             students,
-            totalPages: Math.ceil(count / limit),
-            currentPage: Number(page),
+            total: students.length,
         });
     } catch (error) {
-        res.status(500).json({ message: "Failed to fetch students", error: error.message });
+        res.status(500).json({
+            message: "Failed to fetch students",
+            error: error.message,
+        });
     }
 };
+
+
 
 // GET: Specific Student by ID
 const specificStudent = async (req, res) => {
