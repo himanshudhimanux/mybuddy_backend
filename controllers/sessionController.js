@@ -218,20 +218,98 @@ const getSessionsByType = async (req, res) => {
 };
 
 // Get Sessions with Attendance for a Student
+// const getSessionsWithAttendance = async (req, res) => {
+//   try {
+//     const { courseId, startDate, endDate } = req.query;
+//     const { studentId } = req.params;
+
+//     if (!studentId || !courseId || !startDate || !endDate) {
+//       return res.status(400).json({ success: false, message: "studentId, courseId, startDate, and endDate are required" });
+//     }
+
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+//     end.setHours(23, 59, 59, 999);
+
+//     // Step 1: courseId से related सभी batches निकालो
+//     const courseBatchMappings = await CourseBatchMap.find({ courseId }).lean();
+//     const batchIds = courseBatchMappings.map(map => map.batchId);
+
+//     if (batchIds.length === 0) {
+//       return res.status(404).json({ success: false, message: "No batches found for this course." });
+//     }
+
+//     // Step 2: BatchStudent में चेक करो student इन batches में है या नहीं
+//     const studentBatches = await BatchStudent.find({
+//       studentId,
+//       batchId: { $in: batchIds }
+//     }).lean();
+
+//     if (!studentBatches.length) {
+//       return res.status(404).json({ success: false, message: "Student is not assigned to any batch for the selected course" });
+//     }
+
+//     const studentBatchIds = studentBatches.map(b => b.batchId);
+
+//     // Step 3: Sessions निकालो उन batches के लिए
+//     const sessions = await Session.find({
+//       batchId: { $in: studentBatchIds },
+//       batchDate: { $gte: start, $lte: end },
+//     })
+//       .populate('subjectId', 'name')
+//       .populate('teacherId', 'name')
+//       .lean();
+
+//     // Step 4: हर session के लिए attendance चेक करो
+//     const sessionsWithAttendance = await Promise.all(
+//       sessions.map(async (session) => {
+//         const attendance = await Attendance.findOne({
+//           sessionId: session._id,
+//           studentId,
+//         }).lean();
+
+//         return {
+//           ...session,
+//           subject: session.subjectId?.name,
+//           teacher: session.teacherId?.name,
+//           attendance,
+//         };
+//       })
+//     );
+
+//     res.status(200).json({ success: true, data: sessionsWithAttendance });
+//   } catch (error) {
+//     console.error("Error fetching sessions with attendance:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+
 const getSessionsWithAttendance = async (req, res) => {
   try {
     const { courseId, startDate, endDate } = req.query;
     const { studentId } = req.params;
 
     if (!studentId || !courseId || !startDate || !endDate) {
-      return res.status(400).json({ success: false, message: "studentId, courseId, startDate, and endDate are required" });
+      return res.status(400).json({
+        success: false,
+        message: "studentId, courseId, startDate, and endDate are required",
+      });
     }
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Step 1: courseId से related सभी batches निकालो
+    // ✅ Step 1: Get the student's selected subjects from CourseStudent
+    const courseStudent = await CourseStudent.findOne({ studentId, courseId }).lean();
+    if (!courseStudent) {
+      return res.status(404).json({ success: false, message: "Student not enrolled in this course" });
+    }
+
+    const selectedSubjectIds = courseStudent.subjectIds.map(id => id.toString()); // normalize for comparison
+
+    // ✅ Step 2: Get batches related to the course
     const courseBatchMappings = await CourseBatchMap.find({ courseId }).lean();
     const batchIds = courseBatchMappings.map(map => map.batchId);
 
@@ -239,7 +317,7 @@ const getSessionsWithAttendance = async (req, res) => {
       return res.status(404).json({ success: false, message: "No batches found for this course." });
     }
 
-    // Step 2: BatchStudent में चेक करो student इन batches में है या नहीं
+    // ✅ Step 3: Get batches the student is part of
     const studentBatches = await BatchStudent.find({
       studentId,
       batchId: { $in: batchIds }
@@ -251,16 +329,17 @@ const getSessionsWithAttendance = async (req, res) => {
 
     const studentBatchIds = studentBatches.map(b => b.batchId);
 
-    // Step 3: Sessions निकालो उन batches के लिए
+    // ✅ Step 4: Fetch sessions filtered by student's selected subjects
     const sessions = await Session.find({
       batchId: { $in: studentBatchIds },
       batchDate: { $gte: start, $lte: end },
+      subjectId: { $in: selectedSubjectIds },
     })
       .populate('subjectId', 'name')
       .populate('teacherId', 'name')
       .lean();
 
-    // Step 4: हर session के लिए attendance चेक करो
+    // ✅ Step 5: Add attendance info
     const sessionsWithAttendance = await Promise.all(
       sessions.map(async (session) => {
         const attendance = await Attendance.findOne({
@@ -283,6 +362,7 @@ const getSessionsWithAttendance = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
     
 const getAllSessionByDate = async (req, res) => {

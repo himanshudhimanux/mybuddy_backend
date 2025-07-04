@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyToken, roleCheck } = require('../middlewares/authMiddleware');
-const { registerInsitute, getAllInstitutes, specificInstitute, updateInstitute, deleteInstitute, searchInstitute,upload } = require('../controllers/instituteController');
+const { registerInsitute, getAllInstitutes, specificInstitute, updateInstitute, deleteInstitute, searchInstitute, upload } = require('../controllers/instituteController');
 const router = express.Router();
 
 router.post('/institute', upload.single('logo'), verifyToken, roleCheck('admin'), registerInsitute);
