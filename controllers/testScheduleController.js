@@ -439,8 +439,6 @@ exports.getAllPastTestsForAdmin  = async (req, res) => {
 // };
 
 
-const CourseStudent = require('../models/CourseStudent');
-
 exports.getTestsByType = async (req, res) => {
   try {
     const { testType, startDate, endDate, courseId, studentId } = req.query;
