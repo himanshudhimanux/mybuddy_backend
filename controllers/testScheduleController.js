@@ -4,6 +4,7 @@ const TestType = require('../models/TestTypes');
 const { default: mongoose } = require('mongoose');
 const Course = require('../models/Course'); // Changed from BatchClass
 const Subject = require('../models/Subject');
+const CourseStudent = require('../models/CourseStudentSchema'); 
 
 
 // Create Test Schedule Handler
